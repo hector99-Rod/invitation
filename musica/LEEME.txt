@@ -1,0 +1,2 @@
+Coloca aquí el archivo de la canción con el nombre: cancion.mp3
+(MP3, idealmente de menos de 5 MB). Si el archivo no está, el botón de música no aparece.

@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shana &amp; Héctor · 02.01.2027</title>
+<meta name="description" content="Invitación a la boda de Shana y Héctor · Sábado 2 de enero de 2027 · La Paz, Bolivia">
+<meta name="theme-color" content="#0A1530">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Shana &amp; Héctor · Nos casamos">
+<meta property="og:description" content="Sábado 2 de enero de 2027 · La Paz, Bolivia. Abre tu invitación y confirma tu asistencia.">
+<meta property="og:image" content="https://hector99-rod.github.io/invitation/img/compartir.jpg">
+<meta property="og:url" content="https://hector99-rod.github.io/invitation/">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body class="cerrado">
+
+<canvas id="estrellas" aria-hidden="true"></canvas>
+
+<!-- Portada: sobre con lacre -->
+<div id="portada" class="portada">
+  <div class="portada-inner">
+    <p class="portada-pre">Shana &amp; Héctor</p>
+    <div class="sobre-wrap">
+    <div class="sobre" aria-hidden="true">
+      <div class="sobre-fondo"></div>
+      <div class="sobre-carta">
+        <img src="img/divider.svg" alt="" class="carta-div">
+        <span class="script carta-script">Nos casamos</span>
+        <span class="cinzel carta-fecha">02 · 01 · 2027</span>
+      </div>
+      <svg class="sobre-frente" viewBox="0 0 360 250" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="sf" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1A3170"/><stop offset=".55" stop-color="#11245A"/><stop offset="1" stop-color="#172C66"/>
+          </linearGradient>
+        </defs>
+        <path d="M0 0 L176 150 L0 250 Z M360 0 L184 150 L360 250 Z" fill="#132A62"/>
+        <path d="M0 0 L176 150 M360 0 L184 150" fill="none" stroke="#D9B868" stroke-opacity=".45" stroke-width="1"/>
+        <path d="M0 70 L180 158 L360 70 V250 H0 Z" fill="url(#sf)"/>
+        <path d="M0 70 L180 158 L360 70" fill="none" stroke="#D9B868" stroke-width="1.4"/>
+        <path d="M0 250 L150 140 M360 250 L210 140" stroke="#D9B868" stroke-opacity=".35" stroke-width="1"/>
+      </svg>
+      <svg class="sobre-tapa" viewBox="0 0 360 160" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="st" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#21397C"/><stop offset="1" stop-color="#132658"/>
+          </linearGradient>
+        </defs>
+        <path d="M0 0 H360 L180 158 Z" fill="url(#st)"/>
+        <path d="M0 0 L180 158 L360 0" fill="none" stroke="#D9B868" stroke-width="1.4"/>
+      </svg>
+    </div>
+    <button class="sello" id="abrir" aria-label="Abrir la invitación">
+      <svg viewBox="0 0 92 92" aria-hidden="true">
+        <defs>
+          <radialGradient id="lacre" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#F8E2A6"/><stop offset=".4" stop-color="#D2A954"/><stop offset=".8" stop-color="#9C7130"/><stop offset="1" stop-color="#6E4C1C"/></radialGradient>
+          <radialGradient id="lacreC" cx=".6" cy=".65" r=".7"><stop offset="0" stop-color="#E7C677"/><stop offset="1" stop-color="#A37833"/></radialGradient>
+        </defs>
+        <path d="M90.9 41Q91.9 46 91.6 51.2Q91.3 56.3 87.7 60.4Q84.2 64.4 82.8 69.3Q81.3 74.2 76.8 76.6Q72.3 79 68.5 81.9Q64.7 84.7 60.5 88.1Q56.4 91.4 51.2 91.6Q46 91.8 41 90.8Q36 89.8 31.5 87.7Q26.9 85.6 22.7 83Q18.6 80.4 15 77Q11.5 73.5 9.5 69Q7.5 64.5 4.4 60.4Q1.4 56.2 1.1 51.1Q.8 46 2.5 41.2Q4.2 36.4 6.2 32.1Q8.3 27.8 10.3 23.5Q12.3 19.1 15.5 15.5Q18.7 11.8 22.4 8.1Q26 4.4 31.1 4Q36.3 3.5 41.1 2.1Q46 .7 50.8 2.3Q55.6 4 60.9 4Q66.2 4.1 69.2 8.6Q72.3 13.1 76.6 15.6Q81 18.1 83.1 22.6Q85.3 27.1 87.6 31.5Q89.8 36 90.9 41Z" fill="url(#lacre)"/>
+        <circle cx="46" cy="46" r="33" fill="none" stroke="#F6DC9C" stroke-opacity=".7" stroke-width="1.2"/>
+        <circle cx="46" cy="46" r="31" fill="url(#lacreC)" stroke="#7E5823" stroke-width="1.4"/>
+      </svg>
+      <span class="sello-letras">S&amp;H</span>
+    </button>
+    </div>
+    <p class="portada-para" id="portada-para" hidden>Para: <strong id="portada-familia"></strong></p>
+    <p class="portada-hint">Toca el sello para abrir tu invitación</p>
+  </div>
+</div>
+
+<!-- Música -->
+<button id="musica" class="musica" aria-label="Pausar la música" hidden>
+  <span class="barras" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+  <svg class="nota" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/></svg>
+</button>
+<audio id="audio" preload="none" loop></audio>
+
+<main class="contenido">
+  <div class="arco">
+
+    <!-- Portada interna -->
+    <header class="hero">
+      <img class="hero-flores" src="img/crest3.svg" alt="Ramo de peonías azul noche y marfil con hojas doradas">
+      <p class="script hero-pre rv">Nos casamos</p>
+      <h1 class="nombres rv">
+        <span class="nombre">Shana</span>
+        <span class="apellidos">Andrea Rubín de Celis Baldiviezo</span>
+        <span class="script y">&amp;</span>
+        <span class="nombre">Héctor</span>
+        <span class="apellidos">David Rodrigo Guzmán</span>
+      </h1>
+      <img class="divisor rv" src="img/divider.svg" alt="">
+      <p class="cinzel hero-fecha rv">Sábado · 2 de enero de 2027</p>
+      <p class="cinzel hero-lugar rv">La Paz · Bolivia</p>
+      <img class="hero-ramo rv" src="img/spray3.svg" alt="">
+    </header>
+
+    <!-- Lugares reservados (solo con enlace personal) -->
+    <section class="seccion reservado rv" id="reservado" hidden>
+      <div class="tarjeta">
+        <p class="cinzel etiqueta">Con mucho cariño para</p>
+        <p class="script reservado-familia" id="reservado-familia"></p>
+        <p class="reservado-texto">Hemos reservado <strong id="reservado-cupos"></strong> en su honor.</p>
+        <a class="boton-oro" href="#confirmar">Confirmar asistencia</a>
+      </div>
+    </section>
+
+    <!-- Cuenta regresiva -->
+    <section class="seccion cuenta rv" aria-labelledby="t-cuenta">
+      <h2 class="script" id="t-cuenta">Faltan</h2>
+      <div class="orbitas" id="cuenta" role="timer" aria-live="off">
+        <div class="orbita"><span class="num" data-u="d">--</span><span class="lbl">días</span><i class="satelite"></i></div>
+        <div class="orbita"><span class="num" data-u="h">--</span><span class="lbl">horas</span><i class="satelite"></i></div>
+        <div class="orbita"><span class="num" data-u="m">--</span><span class="lbl">minutos</span><i class="satelite"></i></div>
+        <div class="orbita"><span class="num" data-u="s">--</span><span class="lbl">segundos</span><i class="satelite"></i></div>
+      </div>
+      <p class="frase-corta">Cada segundo nos acerca a ese día.</p>
+    </section>
+
+    <!-- Frase -->
+    <section class="seccion frase rv">
+      <svg class="chispa" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5Z"/></svg>
+      <p>Él soñaba con viajar entre las estrellas; ella, con encontrar una pequeña puerta a otro mundo. Al final, el universo hizo que ambos caminos llegaran al mismo lugar.</p>
+    </section>
+
+    <!-- Nuestros universos -->
+    <section class="seccion universos" aria-labelledby="t-universos">
+      <h2 class="script rv" id="t-universos">Nuestros universos</h2>
+      <div class="universos-par">
+        <figure class="medallon rv">
+          <div class="medallon-img"><img src="img/cosmos.svg" alt="Ilustración dorada de un agujero negro rodeado de órbitas y estrellas"></div>
+          <figcaption><span class="cinzel">Él</span>Entre estrellas, órbitas y agujeros negros</figcaption>
+        </figure>
+        <figure class="medallon rv">
+          <div class="medallon-img"><img src="img/puerta.svg" alt="Ilustración de una pequeña puerta en arco entreabierta, con enredaderas y botones dorados"></div>
+          <figcaption><span class="cinzel">Ella</span>Tras una pequeña puerta secreta</figcaption>
+        </figure>
+      </div>
+      <img class="llave rv" src="img/llave.svg" alt="">
+      <p class="frase-corta rv">Cruzamos el tiempo, el espacio y una puerta escondida para encontrarnos.</p>
+    </section>
+
+    <!-- Nuestra historia -->
+    <section class="seccion historia" aria-labelledby="t-historia">
+      <h2 class="script rv" id="t-historia">Nuestra historia</h2>
+      <figure class="lamina rv">
+        <img class="lamina-ramo" src="img/spray3.svg" alt="">
+        <div class="lamina-marco"><img src="img/monticulo.svg" alt="Ilustración nocturna del Mirador El Montículo con el Illimani al fondo"></div>
+        <figcaption>
+          <span class="script">Donde nos enamoramos</span>
+          <span class="cinzel">Mirador El Montículo · Sopocachi</span>
+        </figcaption>
+      </figure>
+      <figure class="lamina rv">
+        <img class="lamina-ramo" src="img/spray3.svg" alt="">
+        <div class="lamina-marco"><img src="img/greentower.svg" alt="Ilustración nocturna de la Green Tower iluminada en La Paz"></div>
+        <figcaption>
+          <span class="script">Donde nos comprometimos</span>
+          <span class="cinzel">La Suisse · Green Tower</span>
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- Invitación -->
+    <section class="seccion invitacion rv">
+      <img class="divisor" src="img/divider.svg" alt="">
+      <p class="cinzel bendicion">Con la bendición de Dios<br>y de nuestros padres</p>
+      <p class="invitacion-texto">tenemos el honor de invitarle a celebrar el sacramento de nuestro matrimonio.</p>
+      <p class="cita">«Lo que Dios ha unido, que no lo separe el hombre»</p>
+      <p class="cinzel cita-ref">Mateo 19, 6</p>
+    </section>
+
+    <!-- Ceremonia -->
+    <section class="seccion lugar rv" aria-labelledby="t-iglesia">
+      <div class="icono-circulo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V11l7-5 7 5v10M12 2v4M10 3.8h4M10 21v-4a2 2 0 0 1 4 0v4"/></svg></div>
+      <h2 class="cinzel etiqueta" id="t-iglesia">Ceremonia religiosa</h2>
+      <p class="hora">14:00</p>
+      <p class="cinzel lugar-nombre">Parroquia María Madre</p>
+      <p class="lugar-dir">Bolognia · Zona Sur, La Paz</p>
+      <div class="mapa" data-lugar="iglesia"><iframe title="Mapa de la Parroquia María Madre" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe><span class="mapa-velo" aria-hidden="true"></span></div>
+      <div class="botones">
+        <a class="boton-linea" data-maps="iglesia" target="_blank" rel="noopener">Google Maps</a>
+        <a class="boton-linea" data-waze="iglesia" target="_blank" rel="noopener">Waze</a>
+      </div>
+    </section>
+
+    <!-- Recepción -->
+    <section class="seccion lugar rv" aria-labelledby="t-thaya">
+      <img class="divisor" src="img/divider.svg" alt="">
+      <div class="icono-circulo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h4.5l-.6 6.2a1.9 1.9 0 0 1-3.3 0L6 3zM8.3 10.5V18M5.8 18h5M13.5 3H18l-.6 6.2a1.9 1.9 0 0 1-3.3 0L13.5 3zM15.8 10.5V18M13.3 18h5"/></svg></div>
+      <h2 class="cinzel etiqueta" id="t-thaya">Recepción y ceremonia civil</h2>
+      <p class="lugar-intro">Al salir de la iglesia, les esperamos directamente en</p>
+      <p class="cinzel lugar-nombre">Espacio de Eventos Thaya</p>
+      <p class="lugar-dir">Av. Los Sargentos, calle 2 · Bajo Llojeta</p>
+      <div class="horas-par">
+        <div><p class="hora">15:00</p><p class="cinzel mini">Ingreso al salón</p></div>
+        <span class="separador" aria-hidden="true"></span>
+        <div><p class="hora">16:30</p><p class="cinzel mini">Ceremonia civil</p></div>
+      </div>
+      <div class="mapa" data-lugar="thaya"><iframe title="Mapa de Espacio de Eventos Thaya" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe><span class="mapa-velo" aria-hidden="true"></span></div>
+      <div class="botones">
+        <a class="boton-linea" data-maps="thaya" target="_blank" rel="noopener">Google Maps</a>
+        <a class="boton-linea" data-waze="thaya" target="_blank" rel="noopener">Waze</a>
+      </div>
+      <a class="boton-texto" id="agendar" target="_blank" rel="noopener">Agregar a mi calendario</a>
+    </section>
+
+    <!-- Itinerario -->
+    <section class="seccion itinerario rv" aria-labelledby="t-itinerario">
+      <div class="itinerario-caja">
+        <img class="itinerario-ramo" src="img/spray3.svg" alt="">
+        <h2 class="script" id="t-itinerario">Itinerario</h2>
+        <p class="sub">Así celebraremos este día</p>
+        <ol class="linea">
+          <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V11l7-5 7 5v10M12 2v4M10 3.8h4M10 21v-4a2 2 0 0 1 4 0v4"/></svg></span><span class="punto"></span><span class="txt"><b>14:00</b>Ceremonia religiosa<em>Parroquia María Madre, Bolognia</em></span></li>
+          <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h4.5l-.6 6.2a1.9 1.9 0 0 1-3.3 0L6 3zM8.3 10.5V18M5.8 18h5M13.5 3H18l-.6 6.2a1.9 1.9 0 0 1-3.3 0L13.5 3zM15.8 10.5V18M13.3 18h5"/></svg></span><span class="punto"></span><span class="txt"><b>15:00</b>Recepción · ingreso al salón<em>Espacio de Eventos Thaya</em></span></li>
+          <li><span class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="14.5" r="5.5"/><circle cx="15" cy="14.5" r="5.5"/><path d="M13 6.2l2-2.7 2 2.7-2 1.6z"/></svg></span><span class="punto"></span><span class="txt"><b>16:30</b>Ceremonia civil</span></li>
+          <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 17h18M4.5 17a7.5 7.5 0 0 1 15 0M12 9.5V8M10.5 8h3M2.5 20h19"/></svg></span><span class="punto"></span><span class="txt"><b>18:30</b>Cena y banquete</span></li>
+          <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/></svg></span><span class="punto"></span><span class="txt"><b>21:30</b>Hora loca</span></li>
+          <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 21h16M5 21v-5h14v5M7 16v-4h10v4M9 12V9.5h6V12M12 9.5V7"/><path d="M12 5.4c-.7-.6-.7-1.5 0-2.2.7.7.7 1.6 0 2.2z"/></svg></span><span class="punto"></span><span class="txt"><b>22:30</b>Corte de la torta</span></li>
+          <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.5C19 15.6 12 20 12 20z"/></svg></span><span class="punto"></span><span class="txt"><b>23:30</b>Fin de la celebración</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Vestimenta -->
+    <section class="seccion vestimenta rv">
+      <img class="lado izq" src="img/sidespray.svg" alt="">
+      <img class="lado der" src="img/sidespray.svg" alt="">
+      <img class="vest-ramo" src="img/spray3.svg" alt="">
+      <p class="cinzel etiqueta">Código de vestimenta</p>
+      <p class="script grande">Formal</p>
+    </section>
+
+    <!-- Regalo -->
+    <section class="seccion regalo rv" aria-labelledby="t-regalo">
+      <div class="tarjeta">
+        <img class="tarjeta-ramo" src="img/spray3.svg" alt="">
+        <h2 class="cinzel etiqueta" id="t-regalo">Lluvia de sobres</h2>
+        <p class="script regalo-titulo">Su presencia es nuestro mejor regalo</p>
+        <p class="regalo-texto">Si además desean tener un detalle con nosotros, con todo cariño les pedimos que, en lugar de un obsequio físico, nos acompañen con una lluvia de sobres a través de este código. Será una bendición para dar los primeros pasos de nuestro hogar.</p>
+        <img class="qr" src="img/qr-regalo.png" alt="Código QR para lluvia de sobres" width="190" height="190">
+        <a class="boton-linea" href="img/qr-regalo.png" download="QR-regalo-Shana-y-Hector.png">Descargar el código</a>
+        <p class="nota">Guárdelo y escanéelo desde la app de su banco.</p>
+      </div>
+    </section>
+
+    <!-- Confirmación -->
+    <section class="seccion rsvp rv" id="confirmar" aria-labelledby="t-rsvp">
+      <h2 class="script" id="t-rsvp">Confirma tu asistencia</h2>
+      <p class="nota" id="rsvp-limite" hidden></p>
+      <p class="rsvp-cargando" id="rsvp-cargando">Buscando su invitación…</p>
+      <form id="rsvp-form" class="rsvp-form" hidden novalidate>
+        <div class="rsvp-familia" id="rsvp-familia" hidden>
+          <span class="cinzel etiqueta">Invitación para</span>
+          <span class="rsvp-nombre" id="rsvp-nombre"></span>
+          <span class="rsvp-cupos" id="rsvp-cupos"></span>
+        </div>
+        <p class="rsvp-previo" id="rsvp-previo" hidden></p>
+        <div class="campo" id="campo-nombre" hidden>
+          <label for="f-nombre">Nombre y apellido</label>
+          <input id="f-nombre" name="nombre" autocomplete="name" maxlength="120">
+        </div>
+        <fieldset class="opciones">
+          <legend>¿Nos acompañarán?</legend>
+          <label class="opcion"><input type="radio" name="asiste" value="si" checked><span>Sí, ahí estaremos</span></label>
+          <label class="opcion"><input type="radio" name="asiste" value="no"><span>No podremos asistir</span></label>
+        </fieldset>
+        <div class="campo" id="campo-cantidad">
+          <span class="label" id="l-cantidad">¿Cuántas personas asistirán?</span>
+          <div class="stepper" role="group" aria-labelledby="l-cantidad">
+            <button type="button" id="menos" aria-label="Una persona menos">−</button>
+            <output id="cantidad" aria-live="polite">1</output>
+            <button type="button" id="mas" aria-label="Una persona más">+</button>
+          </div>
+          <p class="ayuda" id="ayuda-cupos"></p>
+        </div>
+        <div class="campo" id="campo-nombres">
+          <label for="f-nombres">Nombres de quienes asistirán <span>(opcional)</span></label>
+          <textarea id="f-nombres" name="nombres" rows="2" maxlength="400"></textarea>
+        </div>
+        <div class="campo">
+          <label for="f-mensaje">Un mensaje para los novios <span>(opcional)</span></label>
+          <textarea id="f-mensaje" name="mensaje" rows="3" maxlength="500"></textarea>
+        </div>
+        <button class="boton-oro" type="submit" id="enviar">Enviar confirmación</button>
+        <p class="estado" id="rsvp-estado" role="status" aria-live="polite"></p>
+      </form>
+      <div class="rsvp-gracias" id="rsvp-gracias" hidden>
+        <svg class="chispa" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5Z"/></svg>
+        <p class="script" id="gracias-titulo">¡Gracias!</p>
+        <p id="gracias-texto"></p>
+        <button class="boton-texto" type="button" id="cambiar">Cambiar mi respuesta</button>
+      </div>
+    </section>
+
+    <!-- Cierre -->
+    <footer class="seccion cierre rv">
+      <div class="corona">
+        <img src="img/wreath.svg" alt="">
+        <span class="monograma"><span>S</span><i>&amp;</i><span>H</span></span>
+      </div>
+      <p class="cierre-texto">Les esperamos para celebrar juntos este nuevo comienzo.</p>
+      <p class="cinzel cierre-fecha">Shana &amp; Héctor · 02.01.2027</p>
+    </footer>
+
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
