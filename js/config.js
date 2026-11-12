@@ -10,7 +10,10 @@ window.BODA = {
   // Fecha límite para confirmar (texto libre). Déjala vacía para no mostrarla.
   fechaLimite: "",
 
-  // Personas que puede registrar quien abre la invitación sin enlace personal.
+  // ¿Se puede confirmar sin enlace personal (por ejemplo, desde el QR impreso)?
+  // true: pide el nombre y deja registrar hasta "cuposSinEnlace" personas.
+  // false: solo se confirma con el enlace personal de cada familia.
+  permitirSinEnlace: true,
   cuposSinEnlace: 6,
 
   // Canción de fondo: sube el archivo a la carpeta "musica" con este nombre.
