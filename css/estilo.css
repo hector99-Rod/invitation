@@ -150,7 +150,7 @@ h2.script { margin: 0; font-size: 50px; line-height: 1.1; }
 .apellidos { font-family: var(--cinzel); font-weight: 600; font-size: clamp(11px, 3.1vw, 15px); letter-spacing: .07em; text-transform: uppercase; color: var(--oro); }
 .y { font-size: 46px; line-height: 1; margin: 8px 0 2px; }
 .hero .divisor { margin-top: 22px; width: 260px; }
-.hero-fecha { margin: 16px 0 0; font-size: clamp(14px, 4vw, 17px); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--oro-2); }
+.hero-fecha { margin: 16px 0 0; font-size: clamp(20px, 6vw, 26px); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--oro-2); }
 .hero-lugar { margin: 8px 0 0; font-size: 13px; letter-spacing: .3em; text-transform: uppercase; color: var(--blanco); }
 .hero-ramo { width: 70%; margin: 30px auto 0; }
 
