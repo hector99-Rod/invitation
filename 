@@ -1,0 +1,196 @@
+warning: in the working copy of 'apps-script/Code.gs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'js/app.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'js/config.js', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/apps-script/Code.gs b/apps-script/Code.gs[m
+[1mindex db8fc39..4d9c12e 100644[m
+[1m--- a/apps-script/Code.gs[m
+[1m+++ b/apps-script/Code.gs[m
+[36m@@ -37,9 +37,31 @@[m [mfunction onOpen() {[m
+     .addItem('2 · Generar enlaces y mensajes de WhatsApp', 'generarEnlaces')[m
+     .addSeparator()[m
+     .addItem('Ver resumen de confirmaciones', 'verResumen')[m
+[32m+[m[32m    .addItem('Reabrir confirmación de las filas seleccionadas', 'reabrirSeleccion')[m
+     .addToUi();[m
+ }[m
+ [m
+[32m+[m[32m/**[m
+[32m+[m[32m * Cada enlace personal solo se puede responder una vez. Si una familia necesita[m
+[32m+[m[32m * cambiar su respuesta, seleccionen su fila en "Lista web" y usen esta opción.[m
+[32m+[m[32m */[m
+[32m+[m[32mfunction reabrirSeleccion() {[m
+[32m+[m[32m  const ss = SpreadsheetApp.getActive();[m
+[32m+[m[32m  const hoja = ss.getActiveSheet();[m
+[32m+[m[32m  if (hoja.getName() !== AJUSTES.HOJA_LISTA) {[m
+[32m+[m[32m    SpreadsheetApp.getUi().alert('Primero seleccionen una o más filas en la pestaña "' + AJUSTES.HOJA_LISTA + '".');[m
+[32m+[m[32m    return;[m
+[32m+[m[32m  }[m
+[32m+[m[32m  const rango = hoja.getActiveRange();[m
+[32m+[m[32m  const desde = Math.max(2, rango.getRow());[m
+[32m+[m[32m  const hasta = rango.getLastRow();[m
+[32m+[m[32m  if (hasta < desde) return;[m
+[32m+[m[32m  const n = hasta - desde + 1;[m
+[32m+[m[32m  hoja.getRange(desde, COL.ESTADO, n, 1).setValue('Pendiente');[m
+[32m+[m[32m  hoja.getRange(desde, COL.ASISTENTES, n, 1).clearContent();[m
+[32m+[m[32m  ss.toast(n + (n === 1 ? ' invitación reabierta.' : ' invitaciones reabiertas.') + ' Ya pueden volver a responder con su enlace.', 'Boda S&H', 6);[m
+[32m+[m[32m}[m
+[32m+[m
+ function prepararListaWeb() {[m
+   const ss = SpreadsheetApp.getActive();[m
+   const origen = ss.getSheetByName(AJUSTES.HOJA_ORIGEN);[m
+[36m@@ -150,6 +172,9 @@[m [mfunction doPost(e) {[m
+     if (id) {[m
+       const f = buscar_(id);[m
+       if (!f) return json_({ ok: false, error: 'no_encontrado' });[m
+[32m+[m[32m      if (f.estado === 'Confirmado' || f.estado === 'No asistirá') {[m
+[32m+[m[32m        return json_({ ok: false, error: 'ya_respondio', estado: f.estado, asistentes: f.asistentes });[m
+[32m+[m[32m      }[m
+       invitacion = f.invitacion;[m
+       asistentes = asiste ? Math.max(1, Math.min(f.cupos || 1, parseInt(d.asistentes, 10) || 1)) : 0;[m
+       f.hoja.getRange(f.fila, COL.ESTADO, 1, 5).setValues([[[m
+[1mdiff --git a/index.html b/index.html[m
+[1mindex d303a08..5af1ad6 100644[m
+[1m--- a/index.html[m
+[1m+++ b/index.html[m
+[36m@@ -106,7 +106,7 @@[m
+         <p class="cinzel etiqueta">Con mucho cariño para</p>[m
+         <p class="script reservado-familia" id="reservado-familia"></p>[m
+         <p class="reservado-texto">Hemos reservado <strong id="reservado-cupos"></strong> en su honor.</p>[m
+[31m-        <a class="boton-oro" href="#confirmar">Confirmar asistencia</a>[m
+[32m+[m[32m        <a class="boton-oro" href="#confirmar" id="reservado-boton">Confirmar asistencia</a>[m
+       </div>[m
+     </section>[m
+ [m
+[36m@@ -295,7 +295,7 @@[m
+         <svg class="chispa" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5Z"/></svg>[m
+         <p class="script" id="gracias-titulo">¡Gracias!</p>[m
+         <p id="gracias-texto"></p>[m
+[31m-        <button class="boton-texto" type="button" id="cambiar">Cambiar mi respuesta</button>[m
+[32m+[m[32m        <p class="nota" id="gracias-nota" hidden>Si necesitan hacer algún cambio, escríbannos directamente.</p>[m
+       </div>[m
+     </section>[m
+ [m
+[1mdiff --git a/js/app.js b/js/app.js[m
+[1mindex 02cca5c..b3c613a 100644[m
+[1m--- a/js/app.js[m
+[1m+++ b/js/app.js[m
+[36m@@ -243,14 +243,7 @@[m
+     $("#rsvp-familia").hidden = false;[m
+     $("#campo-nombre").hidden = true;[m
+     $("#ayuda-cupos").textContent = "de " + lugares(cupos) + " reservados para ustedes";[m
+[31m-    fijarCantidad(d.asistentes ? parseInt(d.asistentes, 10) : cupos);[m
+[31m-    if (d.estado === "Confirmado" || d.estado === "No asistirá") {[m
+[31m-      $("#rsvp-previo").textContent = d.estado === "Confirmado"[m
+[31m-        ? "Ya recibimos su confirmación para " + personas(parseInt(d.asistentes, 10) || 1) + ". Si necesitan cambiarla, envíen el formulario de nuevo."[m
+[31m-        : "Nos avisaron que no podrán asistir. Si sus planes cambian, pueden responder de nuevo.";[m
+[31m-      $("#rsvp-previo").hidden = false;[m
+[31m-      if (d.estado === "No asistirá") { form.querySelector('input[value="no"]').checked = true; alCambiarAsistencia(); }[m
+[31m-    }[m
+[32m+[m[32m    fijarCantidad(cupos);[m
+     // Personalización de la portada y del saludo[m
+     $("#portada-familia").textContent = d.invitacion;[m
+     $("#portada-para").hidden = false;[m
+[36m@@ -258,7 +251,29 @@[m
+     $("#reservado-cupos").textContent = lugares(cupos);[m
+     $("#reservado").hidden = false;[m
+     $("#rsvp-cargando").hidden = true;[m
+[31m-    form.hidden = false;[m
+[32m+[m[32m    // Cada enlace personal se responde una sola vez[m
+[32m+[m[32m    if (yaRespondio(d.estado)) mostrarRespondido(d);[m
+[32m+[m[32m    else form.hidden = false;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  function yaRespondio(e) { return e === "Confirmado" || e === "No asistirá"; }[m
+[32m+[m
+[32m+[m[32m  function mostrarRespondido(d) {[m
+[32m+[m[32m    var asistio = d.estado === "Confirmado";[m
+[32m+[m[32m    var n = parseInt(d.asistentes, 10) || 1;[m
+[32m+[m[32m    $("#gracias-titulo").textContent = asistio ? "¡Gracias!" : "Gracias por avisarnos";[m
+[32m+[m[32m    $("#gracias-texto").textContent = asistio[m
+[32m+[m[32m      ? "Ya recibimos su confirmación para " + personas(n) + ". Nos vemos el sábado 2 de enero."[m
+[32m+[m[32m      : "Ya nos avisaron que no podrán acompañarnos. Les extrañaremos mucho.";[m
+[32m+[m[32m    $("#gracias-nota").hidden = false;[m
+[32m+[m[32m    $("#reservado-boton").textContent = "Ver mi confirmación";[m
+[32m+[m[32m    form.hidden = true;[m
+[32m+[m[32m    $("#rsvp-gracias").hidden = false;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  function soloConEnlace() {[m
+[32m+[m[32m    $("#rsvp-cargando").textContent = "Para confirmar, use el enlace personal que le enviamos por WhatsApp.";[m
+[32m+[m[32m    $("#rsvp-cargando").hidden = false;[m
+   }[m
+ [m
+   if (C.fechaLimite) {[m
+[36m@@ -266,17 +281,23 @@[m
+     $("#rsvp-limite").hidden = false;[m
+   }[m
+ [m
+[32m+[m[32m  var sinEnlace = C.permitirSinEnlace === false ? soloConEnlace : modoGeneral;[m
+[32m+[m
+   if (ID && DEMO && !C.appsScriptUrl) {[m
+[31m-    modoFamilia({ invitacion: "Familia de prueba", cupos: 4, estado: "Pendiente" });[m
+[32m+[m[32m    // Vista de prueba: ?id=prueba&demo=1 (agrega &confirmado=1 para ver el enlace ya usado)[m
+[32m+[m[32m    modoFamilia(params.has("confirmado")[m
+[32m+[m[32m      ? { invitacion: "Familia de prueba", cupos: 4, estado: "Confirmado", asistentes: 3 }[m
+[32m+[m[32m      : { invitacion: "Familia de prueba", cupos: 4, estado: "Pendiente" });[m
+   } else if (ID && C.appsScriptUrl) {[m
+     consultar(ID).then(function (d) {[m
+       if (d && d.ok) modoFamilia(d);[m
+[32m+[m[32m      else if (C.permitirSinEnlace === false) soloConEnlace();[m
+       else modoGeneral("No encontramos su enlace personal. Pueden confirmar escribiendo su nombre.");[m
+     }).catch(function () {[m
+[31m-      modoGeneral();[m
+[32m+[m[32m      $("#rsvp-cargando").textContent = "No pudimos cargar su invitación. Revise su conexión y vuelva a abrir el enlace.";[m
+     });[m
+   } else {[m
+[31m-    modoGeneral();[m
+[32m+[m[32m    sinEnlace();[m
+   }[m
+ [m
+   form.addEventListener("submit", function (e) {[m
+[36m@@ -305,24 +326,23 @@[m
+     estado.textContent = "Enviando…";[m
+     var envio = (!C.appsScriptUrl && DEMO) ? Promise.resolve({ ok: true }) : enviar(datos);[m
+     envio.then(function (r) {[m
+[32m+[m[32m      if (r && r.error === "ya_respondio") { estado.textContent = ""; mostrarRespondido(r); return; }[m
+       if (!r || !r.ok) throw new Error((r && r.error) || "error");[m
+       estado.textContent = "";[m
+       $("#gracias-titulo").textContent = asiste ? "¡Gracias!" : "Gracias por avisarnos";[m
+       $("#gracias-texto").textContent = asiste[m
+         ? "Registramos " + personas(datos.asistentes) + ". Nos vemos el sábado 2 de enero."[m
+         : "Les extrañaremos mucho. Gracias por acompañarnos con su cariño.";[m
+[32m+[m[32m      if (invitacion) {[m
+[32m+[m[32m        $("#gracias-nota").hidden = false;[m
+[32m+[m[32m        $("#reservado-boton").textContent = "Ver mi confirmación";[m
+[32m+[m[32m      }[m
+       form.hidden = true;[m
+       $("#rsvp-gracias").hidden = false;[m
+[31m-      try { localStorage.setItem("rsvp-" + (ID || "general"), JSON.stringify({ asiste: asiste, n: datos.asistentes })); } catch (err) { /* sin almacenamiento */ }[m
+     }).catch(function () {[m
+       mostrarError("No pudimos enviar su confirmación. Revise su conexión e inténtelo de nuevo.");[m
+     }).then(function () {[m
+       boton.disabled = false;[m
+     });[m
+   });[m
+[31m-[m
+[31m-  $("#cambiar").addEventListener("click", function () {[m
+[31m-    $("#rsvp-gracias").hidden = true;[m
+[31m-    form.hidden = false;[m
+[31m-  });[m
+ })();[m
+[1mdiff --git a/js/config.js b/js/config.js[m
+[1mindex 618027f..32d1b0d 100644[m
+[1m--- a/js/config.js[m
+[1m+++ b/js/config.js[m
+[36m@@ -10,7 +10,10 @@[m [mwindow.BODA = {[m
+   // Fecha límite para confirmar (texto libre). Déjala vacía para no mostrarla.[m
+   fechaLimite: "",[m
+ [m
+[31m-  // Personas que puede registrar quien abre la invitación sin enlace personal.[m
+[32m+[m[32m  // ¿Se puede confirmar sin enlace personal (por ejemplo, desde el QR impreso)?[m
+[32m+[m[32m  // true: pide el nombre y deja registrar hasta "cuposSinEnlace" personas.[m
+[32m+[m[32m  // false: solo se confirma con el enlace personal de cada familia.[m
+[32m+[m[32m  permitirSinEnlace: true,[m
+   cuposSinEnlace: 6,[m
+ [m
+   // Canción de fondo: sube el archivo a la carpeta "musica" con este nombre.[m

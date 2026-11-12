@@ -243,14 +243,7 @@
     $("#rsvp-familia").hidden = false;
     $("#campo-nombre").hidden = true;
     $("#ayuda-cupos").textContent = "de " + lugares(cupos) + " reservados para ustedes";
-    fijarCantidad(d.asistentes ? parseInt(d.asistentes, 10) : cupos);
-    if (d.estado === "Confirmado" || d.estado === "No asistirá") {
-      $("#rsvp-previo").textContent = d.estado === "Confirmado"
-        ? "Ya recibimos su confirmación para " + personas(parseInt(d.asistentes, 10) || 1) + ". Si necesitan cambiarla, envíen el formulario de nuevo."
-        : "Nos avisaron que no podrán asistir. Si sus planes cambian, pueden responder de nuevo.";
-      $("#rsvp-previo").hidden = false;
-      if (d.estado === "No asistirá") { form.querySelector('input[value="no"]').checked = true; alCambiarAsistencia(); }
-    }
+    fijarCantidad(cupos);
     // Personalización de la portada y del saludo
     $("#portada-familia").textContent = d.invitacion;
     $("#portada-para").hidden = false;
@@ -258,7 +251,29 @@
     $("#reservado-cupos").textContent = lugares(cupos);
     $("#reservado").hidden = false;
     $("#rsvp-cargando").hidden = true;
-    form.hidden = false;
+    // Cada enlace personal se responde una sola vez
+    if (yaRespondio(d.estado)) mostrarRespondido(d);
+    else form.hidden = false;
+  }
+
+  function yaRespondio(e) { return e === "Confirmado" || e === "No asistirá"; }
+
+  function mostrarRespondido(d) {
+    var asistio = d.estado === "Confirmado";
+    var n = parseInt(d.asistentes, 10) || 1;
+    $("#gracias-titulo").textContent = asistio ? "¡Gracias!" : "Gracias por avisarnos";
+    $("#gracias-texto").textContent = asistio
+      ? "Ya recibimos su confirmación para " + personas(n) + ". Nos vemos el sábado 2 de enero."
+      : "Ya nos avisaron que no podrán acompañarnos. Les extrañaremos mucho.";
+    $("#gracias-nota").hidden = false;
+    $("#reservado-boton").textContent = "Ver mi confirmación";
+    form.hidden = true;
+    $("#rsvp-gracias").hidden = false;
+  }
+
+  function soloConEnlace() {
+    $("#rsvp-cargando").textContent = "Para confirmar, use el enlace personal que le enviamos por WhatsApp.";
+    $("#rsvp-cargando").hidden = false;
   }
 
   if (C.fechaLimite) {
@@ -266,17 +281,23 @@
     $("#rsvp-limite").hidden = false;
   }
 
+  var sinEnlace = C.permitirSinEnlace === false ? soloConEnlace : modoGeneral;
+
   if (ID && DEMO && !C.appsScriptUrl) {
-    modoFamilia({ invitacion: "Familia de prueba", cupos: 4, estado: "Pendiente" });
+    // Vista de prueba: ?id=prueba&demo=1 (agrega &confirmado=1 para ver el enlace ya usado)
+    modoFamilia(params.has("confirmado")
+      ? { invitacion: "Familia de prueba", cupos: 4, estado: "Confirmado", asistentes: 3 }
+      : { invitacion: "Familia de prueba", cupos: 4, estado: "Pendiente" });
   } else if (ID && C.appsScriptUrl) {
     consultar(ID).then(function (d) {
       if (d && d.ok) modoFamilia(d);
+      else if (C.permitirSinEnlace === false) soloConEnlace();
       else modoGeneral("No encontramos su enlace personal. Pueden confirmar escribiendo su nombre.");
     }).catch(function () {
-      modoGeneral();
+      $("#rsvp-cargando").textContent = "No pudimos cargar su invitación. Revise su conexión y vuelva a abrir el enlace.";
     });
   } else {
-    modoGeneral();
+    sinEnlace();
   }
 
   form.addEventListener("submit", function (e) {
@@ -305,24 +326,23 @@
     estado.textContent = "Enviando…";
     var envio = (!C.appsScriptUrl && DEMO) ? Promise.resolve({ ok: true }) : enviar(datos);
     envio.then(function (r) {
+      if (r && r.error === "ya_respondio") { estado.textContent = ""; mostrarRespondido(r); return; }
       if (!r || !r.ok) throw new Error((r && r.error) || "error");
       estado.textContent = "";
       $("#gracias-titulo").textContent = asiste ? "¡Gracias!" : "Gracias por avisarnos";
       $("#gracias-texto").textContent = asiste
         ? "Registramos " + personas(datos.asistentes) + ". Nos vemos el sábado 2 de enero."
         : "Les extrañaremos mucho. Gracias por acompañarnos con su cariño.";
+      if (invitacion) {
+        $("#gracias-nota").hidden = false;
+        $("#reservado-boton").textContent = "Ver mi confirmación";
+      }
       form.hidden = true;
       $("#rsvp-gracias").hidden = false;
-      try { localStorage.setItem("rsvp-" + (ID || "general"), JSON.stringify({ asiste: asiste, n: datos.asistentes })); } catch (err) { /* sin almacenamiento */ }
     }).catch(function () {
       mostrarError("No pudimos enviar su confirmación. Revise su conexión e inténtelo de nuevo.");
     }).then(function () {
       boton.disabled = false;
     });
-  });
-
-  $("#cambiar").addEventListener("click", function () {
-    $("#rsvp-gracias").hidden = true;
-    form.hidden = false;
   });
 })();

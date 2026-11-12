@@ -37,7 +37,29 @@ function onOpen() {
     .addItem('2 · Generar enlaces y mensajes de WhatsApp', 'generarEnlaces')
     .addSeparator()
     .addItem('Ver resumen de confirmaciones', 'verResumen')
+    .addItem('Reabrir confirmación de las filas seleccionadas', 'reabrirSeleccion')
     .addToUi();
+}
+
+/**
+ * Cada enlace personal solo se puede responder una vez. Si una familia necesita
+ * cambiar su respuesta, seleccionen su fila en "Lista web" y usen esta opción.
+ */
+function reabrirSeleccion() {
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getActiveSheet();
+  if (hoja.getName() !== AJUSTES.HOJA_LISTA) {
+    SpreadsheetApp.getUi().alert('Primero seleccionen una o más filas en la pestaña "' + AJUSTES.HOJA_LISTA + '".');
+    return;
+  }
+  const rango = hoja.getActiveRange();
+  const desde = Math.max(2, rango.getRow());
+  const hasta = rango.getLastRow();
+  if (hasta < desde) return;
+  const n = hasta - desde + 1;
+  hoja.getRange(desde, COL.ESTADO, n, 1).setValue('Pendiente');
+  hoja.getRange(desde, COL.ASISTENTES, n, 1).clearContent();
+  ss.toast(n + (n === 1 ? ' invitación reabierta.' : ' invitaciones reabiertas.') + ' Ya pueden volver a responder con su enlace.', 'Boda S&H', 6);
 }
 
 function prepararListaWeb() {
@@ -150,6 +172,9 @@ function doPost(e) {
     if (id) {
       const f = buscar_(id);
       if (!f) return json_({ ok: false, error: 'no_encontrado' });
+      if (f.estado === 'Confirmado' || f.estado === 'No asistirá') {
+        return json_({ ok: false, error: 'ya_respondio', estado: f.estado, asistentes: f.asistentes });
+      }
       invitacion = f.invitacion;
       asistentes = asiste ? Math.max(1, Math.min(f.cupos || 1, parseInt(d.asistentes, 10) || 1)) : 0;
       f.hoja.getRange(f.fila, COL.ESTADO, 1, 5).setValues([[
