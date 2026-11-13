@@ -2,7 +2,7 @@
 window.BODA = {
   // URL de la aplicación web de Google Apps Script (Implementar → Aplicación web).
   // Mientras esté vacía, el formulario de confirmación muestra un aviso.
-  appsScriptUrl: "",
+  appsScriptUrl: "https://script.google.com/macros/s/AKfycbwUnYjBYiSuJENXCHI2mFYEJ4tWz2F9zMWtC_24Uq_bfaKEnYYNgs1abQVPNqtnqRFH/exec",
 
   // Fecha y hora de la ceremonia (hora de Bolivia, UTC-4).
   fecha: "2027-01-02T14:00:00-04:00",
