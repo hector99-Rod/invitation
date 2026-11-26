@@ -20,6 +20,10 @@ Página (GitHub Pages) ──fetch──► Apps Script (URL /exec en js/config.
 El Apps Script vive dentro de la hoja (Extensiones → Apps Script). `apps-script/Code.gs` es una copia
 de ese código: si se cambia aquí, hay que pegarlo allá y publicar una versión nueva.
 
+Cada familia tiene un **ID fijo** (sale de su nombre y de una clave secreta guardada en el script, no en
+GitHub): si se borra `Lista web` y se vuelve a armar con el menú 1, cada familia recibe el mismo enlace.
+Si se borra el contenido de una pestaña, sus encabezados se reponen solos.
+
 Pestañas que usa el script: `Invitaciones` (lista escrita a mano), `Lista web` (una fila por familia),
 `Respuestas web` (historial de confirmaciones), `Fotos web` (registro de fotos subidas) y
 `Canciones` (pedidos de canciones, con la familia y el lado cuando vienen de un enlace personal).
