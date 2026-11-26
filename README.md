@@ -34,12 +34,13 @@ No hay que cambiarles el nombre.
    Así la URL `/exec` no cambia. (Con "Nueva implementación" sale otra URL y habría que cambiar
    `js/config.js`).
 
-## WhatsApp para más familiares (pestaña `Contactos`)
+## WhatsApp para más familiares (en la misma `Lista web`)
 
-Menú **Boda S&H → 3 · WhatsApp para más familiares**. En cada fila: elegir la invitación de la lista,
-escribir el nombre y el teléfono de la persona. Las columnas grises (ID, enlace, WhatsApp) se llenan solas.
-Cada persona recibe un mensaje con su nombre y el mismo enlace de su familia: la invitación sigue a nombre
-del jefe de familia y se confirma una sola vez. El menú 2 también actualiza esta pestaña.
+Al final de `Lista web` están **Otros familiares (nombre y teléfono)** y **WhatsApp otros familiares**.
+En la primera se escribe, por ejemplo, `Ana 70123456, Luis 69998877`; en la segunda aparece `Ana · Luis`,
+cada nombre como enlace de WhatsApp con un mensaje para esa persona y el mismo enlace de su familia.
+La invitación sigue a nombre del jefe de familia y se confirma una sola vez. Al cambiar los cupos, o con
+el menú 2, los mensajes se actualizan.
 
 ## Fotos de los invitados
 

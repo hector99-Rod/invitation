@@ -9,13 +9,14 @@
  *          nueva "Lista web", con un ID único y cupos sugeridos para revisar.
  *       2. Generar enlaces: crea el enlace personal de cada familia y un enlace
  *          de WhatsApp con el mensaje listo para enviar.
- *       3. WhatsApp para más familiares: pestaña "Contactos" con una fila por
- *          persona (invitación, nombre, teléfono). Cada persona recibe un mensaje
- *          con su nombre y el MISMO enlace de su familia; la invitación sigue a
- *          nombre del jefe de familia y se confirma una sola vez.
- *       3. Ver resumen: totales de confirmados, personas y pendientes.
- *       4. Preparar carpeta de fotos: crea la carpeta de Drive donde llegan las
+ *       - Ver resumen: totales de confirmados, personas y pendientes.
+ *       - Preparar carpeta de fotos: crea la carpeta de Drive donde llegan las
  *          fotos de los invitados (y pide el permiso de Drive la primera vez).
+ *   - Otros familiares (en la misma "Lista web", columnas M y N): en "Otros
+ *     familiares" se escribe "Ana 70123456, Luis 69998877" y en la columna de al
+ *     lado aparece cada nombre como enlace de WhatsApp, con un mensaje para esa
+ *     persona y el MISMO enlace de su familia. La invitación sigue a nombre del
+ *     jefe de familia y se confirma una sola vez.
  *   - Recibe las confirmaciones de la página y las guarda en "Lista web"
  *     (estado actual de cada familia) y en "Respuestas web" (historial).
  *   - Recibe las fotos de los invitados, las guarda en la carpeta de Drive y
@@ -30,7 +31,6 @@ const AJUSTES = {
   HOJA_RESPUESTAS: 'Respuestas web',
   HOJA_FOTOS: 'Fotos web',
   HOJA_CANCIONES: 'Canciones',
-  HOJA_CONTACTOS: 'Contactos',
   CARPETA_FOTOS: 'Boda S&H · Fotos de invitados',
   MAX_FOTO_MB: 15,
   // Cambia esto por la dirección de la página publicada en GitHub Pages:
@@ -39,18 +39,21 @@ const AJUSTES = {
   CODIGO_PAIS: '591'
 };
 
+// Las columnas nuevas van SIEMPRE al final: así las versiones anteriores del
+// script (que escriben en Estado…Última respuesta) nunca se desalinean.
 const ENCABEZADOS = ['ID', 'Lado', 'Invitación (jefe de familia)', 'Cupos', 'Teléfono (WhatsApp)',
-  'Enlace personal', 'Enviar por WhatsApp', 'Estado', 'Asistentes', 'Nombres', 'Mensaje', 'Última respuesta'];
+  'Enlace personal', 'Enviar por WhatsApp', 'Estado', 'Asistentes', 'Nombres', 'Mensaje', 'Última respuesta',
+  'Otros familiares (nombre y teléfono)', 'WhatsApp otros familiares'];
 const COL = { ID: 1, LADO: 2, INVITACION: 3, CUPOS: 4, TELEFONO: 5, ENLACE: 6, WHATSAPP: 7,
-  ESTADO: 8, ASISTENTES: 9, NOMBRES: 10, MENSAJE: 11, FECHA: 12 };
+  ESTADO: 8, ASISTENTES: 9, NOMBRES: 10, MENSAJE: 11, FECHA: 12, OTROS: 13, WA_OTROS: 14 };
 
 /* ---------------- Menú ---------------- */
 
 function onOpen() {
+  try { asegurarColumnasFamiliares_(hojaLista_(SpreadsheetApp.getActive())); } catch (err) { /* sin lista aún */ }
   SpreadsheetApp.getUi().createMenu('Boda S&H')
     .addItem('1 · Preparar lista web', 'prepararListaWeb')
     .addItem('2 · Generar enlaces y mensajes de WhatsApp', 'generarEnlaces')
-    .addItem('3 · WhatsApp para más familiares (pestaña Contactos)', 'prepararContactos')
     .addSeparator()
     .addItem('Ver resumen de confirmaciones', 'verResumen')
     .addItem('Reabrir confirmación de las filas seleccionadas', 'reabrirSeleccion')
@@ -113,7 +116,7 @@ function prepararListaWeb() {
       const nombre = String(datos[r][lado.col] || '').trim();
       if (!nombre || yaEstan.has(normalizar_(nombre))) return;
       yaEstan.add(normalizar_(nombre));
-      nuevas.push([nuevoId_(), lado.nombre, nombre, cuposSugeridos_(nombre), '', '', '', 'Pendiente', '', '', '', '']);
+      nuevas.push([nuevoId_(), lado.nombre, nombre, cuposSugeridos_(nombre), '', '', '', 'Pendiente', '', '', '', '', '', '']);
     });
   }
   if (nuevas.length) {
@@ -151,93 +154,75 @@ function generarEnlaces() {
   });
   lista.getRange(2, COL.ID, n, 1).setValues(enlaces.map(function (e) { return [e[0]]; }));
   lista.getRange(2, COL.ENLACE, n, 2).setValues(enlaces.map(function (e) { return [e[1], e[2]]; }));
-  // Los mensajes de "Contactos" usan estos enlaces y cupos: se rehacen también
-  const contactos = ss.getSheetByName(AJUSTES.HOJA_CONTACTOS);
-  if (contactos && contactos.getLastRow() > 1) completarContactos_(contactos, 2, contactos.getLastRow());
+  // Los mensajes de "Otros familiares" usan estos enlaces y cupos: se rehacen también
+  asegurarColumnasFamiliares_(lista);
+  completarFamiliares_(lista, 2, lista.getLastRow());
 }
 
-/* ---------------- Contactos: la misma invitación a varios familiares ---------------- */
+/* ---------------- Otros familiares: la misma invitación a varios WhatsApp ---------------- */
 
-const COL_CONTACTO = { INVITACION: 1, NOMBRE: 2, TELEFONO: 3, ID: 4, ENLACE: 5, WHATSAPP: 6 };
-
-/** Menú 3: crea la pestaña "Contactos" (si no existe), la actualiza y la muestra. */
-function prepararContactos() {
-  const ss = SpreadsheetApp.getActive();
-  const h = hojaContactos_(ss);
-  if (h.getLastRow() > 1) completarContactos_(h, 2, h.getLastRow());
-  h.activate();
-  ss.toast('En cada fila elijan la invitación, escriban el nombre y el teléfono: el enlace de WhatsApp se arma solo.', 'Boda S&H', 10);
-}
-
-/** Al escribir en "Contactos", se arma el enlace de WhatsApp de esas filas. */
+/** Al escribir en "Lista web" (invitación, cupos u otros familiares), se arman sus enlaces. */
 function onEdit(e) {
   const rango = e && e.range;
-  if (!rango || rango.getSheet().getName() !== AJUSTES.HOJA_CONTACTOS) return;
-  if (rango.getColumn() > COL_CONTACTO.TELEFONO) return; // editaron columnas que llena el script
+  if (!rango || rango.getSheet().getName() !== AJUSTES.HOJA_LISTA) return;
+  if (rango.getLastColumn() < COL.INVITACION || rango.getColumn() > COL.OTROS) return;
   const desde = Math.max(2, rango.getRow());
   const hasta = rango.getLastRow();
-  if (hasta >= desde) completarContactos_(rango.getSheet(), desde, hasta);
+  if (hasta >= desde) completarFamiliares_(rango.getSheet(), desde, hasta);
 }
 
-function completarContactos_(hoja, desde, hasta) {
-  const familias = familiasPorNombre_();
+/** En cada fila, convierte "Ana 70123456, Luis 69998877" en "Ana · Luis", cada nombre con su enlace de WhatsApp. */
+function completarFamiliares_(hoja, desde, hasta) {
+  if (hasta < desde) return;
   const n = hasta - desde + 1;
-  const filas = hoja.getRange(desde, 1, n, COL_CONTACTO.TELEFONO).getValues();
+  const filas = hoja.getRange(desde, 1, n, COL.OTROS).getValues();
   const salida = filas.map(function (f) {
-    const familia = String(f[COL_CONTACTO.INVITACION - 1] || '').trim();
-    if (!familia) return ['', '', ''];
-    const inv = familias[normalizar_(familia)];
-    if (!inv) return ['', '', '⚠ Elijan la invitación de la lista'];
-    const enlace = AJUSTES.URL_PAGINA + '?id=' + inv.id;
-    const nombre = String(f[COL_CONTACTO.NOMBRE - 1] || '').trim();
-    const mensaje = 'Hola' + (nombre ? ', ' + nombre : '') + '. Con mucho cariño te compartimos la invitación a nuestra boda ' +
-      'para ' + inv.invitacion + ', el sábado 2 de enero de 2027.' +
-      (inv.cupos > 1 ? ' Hemos reservado ' + inv.cupos + ' lugares para la familia.' : '') +
-      ' Para confirmar, basta con que uno de ustedes responda por todos aquí: ' + enlace + '  Con cariño, Shana y Héctor';
-    return [inv.id, enlace, 'https://wa.me/' + telefono_(f[COL_CONTACTO.TELEFONO - 1]) + '?text=' + encodeURIComponent(mensaje)];
-  });
-  hoja.getRange(desde, COL_CONTACTO.ID, n, 3).setValues(salida);
-}
-
-/** { "juan carlos rubin de celis y familia": { id, invitacion, cupos }, ... } desde "Lista web". */
-function familiasPorNombre_() {
-  const lista = hojaLista_(SpreadsheetApp.getActive());
-  const n = lista.getLastRow() - 1;
-  const mapa = {};
-  if (n < 1) return mapa;
-  lista.getRange(2, 1, n, ENCABEZADOS.length).getValues().forEach(function (f) {
     const id = String(f[COL.ID - 1]).trim();
-    const invitacion = String(f[COL.INVITACION - 1]).trim();
-    if (id && invitacion) mapa[normalizar_(invitacion)] = { id: id, invitacion: invitacion, cupos: parseInt(f[COL.CUPOS - 1], 10) || 1 };
+    const personas = familiaresDe_(f[COL.OTROS - 1]);
+    const constructor = SpreadsheetApp.newRichTextValue();
+    if (!id || !personas.length) return [constructor.setText('').build()];
+    const enlace = AJUSTES.URL_PAGINA + '?id=' + id;
+    const cupos = parseInt(f[COL.CUPOS - 1], 10) || 1;
+    const SEP = '  ·  ';
+    const etiquetas = personas.map(function (p) { return p.nombre || p.telefono; });
+    constructor.setText(etiquetas.join(SEP));
+    let inicio = 0;
+    personas.forEach(function (p, i) {
+      const fin = inicio + etiquetas[i].length;
+      const mensaje = mensajeFamiliar_(p.nombre, String(f[COL.INVITACION - 1]).trim(), cupos, enlace);
+      constructor.setLinkUrl(inicio, fin, 'https://wa.me/' + telefono_(p.telefono) + '?text=' + encodeURIComponent(mensaje));
+      inicio = fin + SEP.length;
+    });
+    return [constructor.build()];
   });
-  return mapa;
+  hoja.getRange(desde, COL.WA_OTROS, n, 1).setRichTextValues(salida);
 }
 
-function hojaContactos_(ss) {
-  let h = ss.getSheetByName(AJUSTES.HOJA_CONTACTOS);
-  if (!h) {
-    h = ss.insertSheet(AJUSTES.HOJA_CONTACTOS);
-    h.getRange(1, 1, 1, 6).setValues([['Invitación (elijan de la lista)', 'Nombre de la persona', 'Teléfono (WhatsApp)',
-      'ID', 'Enlace personal', 'Enviar por WhatsApp']])
-      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
-    h.setFrozenRows(1);
-    h.setColumnWidth(COL_CONTACTO.INVITACION, 300);
-    h.setColumnWidth(COL_CONTACTO.NOMBRE, 180);
-    h.setColumnWidth(COL_CONTACTO.TELEFONO, 160);
-    h.setColumnWidth(COL_CONTACTO.ENLACE, 260);
-    h.setColumnWidth(COL_CONTACTO.WHATSAPP, 200);
-    h.getRange(2, COL_CONTACTO.TELEFONO, h.getMaxRows() - 1, 1).setNumberFormat('@'); // texto: no pierde el + ni los ceros
-    h.getRange(2, COL_CONTACTO.ID, h.getMaxRows() - 1, 3).setBackground('#F3F3F3');  // gris = lo llena el script
-  }
-  // Lista desplegable con las invitaciones de "Lista web" (toda la columna, así incluye las nuevas)
-  const lista = hojaLista_(ss);
-  const regla = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(lista.getRange(2, COL.INVITACION, Math.max(1, lista.getMaxRows() - 1), 1), true)
-    .setAllowInvalid(false)
-    .setHelpText('Elijan la invitación de la lista (pestaña "' + AJUSTES.HOJA_LISTA + '").')
-    .build();
-  h.getRange(2, COL_CONTACTO.INVITACION, h.getMaxRows() - 1, 1).setDataValidation(regla);
-  return h;
+/** "Ana 70123456, Luis +591 6999 8877; Rosa" → [{nombre:'Ana', telefono:'70123456'}, …] */
+function familiaresDe_(texto) {
+  return String(texto || '').split(/[,;\n\/]+/).map(function (parte) {
+    const telefono = (parte.match(/\+?\d[\d\s.\-]{5,}\d/) || [''])[0];
+    const nombre = parte.replace(telefono, ' ').replace(/[:()\-–]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return { nombre: nombre, telefono: telefono.trim() };
+  }).filter(function (p) { return p.nombre || p.telefono; });
+}
+
+function mensajeFamiliar_(nombre, invitacion, cupos, enlace) {
+  return 'Hola' + (nombre ? ', ' + nombre : '') + '. Con mucho cariño te compartimos la invitación a nuestra boda ' +
+    'para ' + invitacion + ', el sábado 2 de enero de 2027.' +
+    (cupos > 1 ? ' Hemos reservado ' + cupos + ' lugares para la familia.' : '') +
+    ' Para confirmar, basta con que uno de ustedes responda por todos aquí: ' + enlace + '  Con cariño, Shana y Héctor';
+}
+
+/** Agrega al final de "Lista web" las dos columnas de otros familiares, si todavía no están. */
+function asegurarColumnasFamiliares_(h) {
+  const actuales = h.getRange(1, COL.OTROS, 1, 2).getValues()[0];
+  if (actuales[0] === ENCABEZADOS[COL.OTROS - 1] && actuales[1] === ENCABEZADOS[COL.WA_OTROS - 1]) return;
+  h.getRange(1, COL.OTROS, 1, 2).setValues([[ENCABEZADOS[COL.OTROS - 1], ENCABEZADOS[COL.WA_OTROS - 1]]])
+    .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
+  h.setColumnWidth(COL.OTROS, 300);
+  h.setColumnWidth(COL.WA_OTROS, 240);
+  h.getRange(1, COL.OTROS).setNote('Escriban nombre y teléfono separados por comas. Ej.: Ana 70123456, Luis 69998877');
 }
 
 function verResumen() {
