@@ -163,6 +163,10 @@ h2.script { margin: 0; font-size: 50px; line-height: 1.1; }
 .tarjeta-ramo { position: absolute; left: 50%; top: -42px; width: 62%; transform: translateX(-50%); }
 .reservado-familia { margin: 6px 0 0; font-size: 40px; line-height: 1.15; }
 .reservado-texto { margin: 8px 0 18px; font-size: 21px; font-style: italic; }
+.reservado-nota {
+  max-width: 340px; margin: -6px auto 20px; padding: 12px 6px 0; border-top: 1px solid rgba(217, 184, 104, .4);
+  font-size: 18px; line-height: 1.45; font-style: italic; color: var(--marfil);
+}
 .reservado-texto strong { font-family: var(--cinzel); font-style: normal; font-weight: 600; color: var(--blanco); }
 
 .boton-oro {

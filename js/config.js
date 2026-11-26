@@ -24,6 +24,11 @@ window.BODA = {
   // Canciones: true muestra "Pide tu canción" (se guardan en la pestaña "Canciones").
   pedirCanciones: true,
 
+  // Invitaciones solo para adultos: si el nombre de la invitación (columna C de
+  // "Lista web") contiene alguno de estos textos, su saludo muestra esta nota.
+  soloAdultos: ["Andres Adolfo", "Jhoseph"],
+  notaSoloAdultos: "Con mucho cariño les comentamos que, en esta ocasión, la invitación es solo para adultos y no incluye a sus hijos.",
+
   // Canción de fondo: sube el archivo a la carpeta "musica" con este nombre.
   musica: "musica/cancion.mp3",
 

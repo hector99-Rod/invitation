@@ -250,20 +250,27 @@
       $("#portada-familia").textContent = d.invitacion;
       $("#portada-para").hidden = false;
     }
-    // Fotos: a nombre de la invitación, sin pedir el nombre
-    $("#fotos-nombre").textContent = d.invitacion;
-    $("#fotos-familia").hidden = false;
+    // Fotos y canciones se guardan a nombre de la invitación (sin pedir ni mostrar el nombre)
     $("#campo-autor").hidden = true;
-    // Canciones: también a nombre de la invitación
-    $("#cancion-nombre").textContent = d.invitacion;
-    $("#cancion-familia").hidden = false;
     $("#reservado-familia").textContent = d.invitacion;
     $("#reservado-cupos").textContent = lugares(cupos);
+    // Invitaciones solo para adultos (config.soloAdultos)
+    if (C.notaSoloAdultos && (C.soloAdultos || []).some(function (t) {
+      return t && normalizar(d.invitacion).indexOf(normalizar(t)) !== -1;
+    })) {
+      $("#reservado-nota").textContent = C.notaSoloAdultos;
+      $("#reservado-nota").hidden = false;
+    }
     $("#reservado").hidden = false;
     $("#rsvp-cargando").hidden = true;
     // Cada enlace personal se responde una sola vez
     if (yaRespondio(d.estado)) mostrarRespondido(d);
     else form.hidden = false;
+  }
+
+  // "Andrés  Adolfo" → "andres adolfo" (sin tildes ni mayúsculas, para comparar nombres)
+  function normalizar(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
   }
 
   function yaRespondio(e) { return e === "Confirmado" || e === "No asistirá"; }
