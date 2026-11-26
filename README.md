@@ -34,7 +34,14 @@ No hay que cambiarles el nombre.
 
 ## Fotos de los invitados
 
-- La sección aparece sola desde la fecha `fotosDesde` de `js/config.js`.
-- Con `?fotos` en la URL se ve antes y salta el sobre: sirve para probarla y para el QR de las mesas
+- La sección aparece en todos los enlaces (`mostrarFotos: true` en `js/config.js`).
+- En los enlaces personales (`?id=...`) no se pide nombre: las fotos quedan a nombre de la invitación
+  del Excel. En el enlace general el nombre es opcional.
+- Con `?fotos` en la URL se salta el sobre y va directo a las fotos: sirve para el QR de las mesas
   (`https://hector99-rod.github.io/invitation/?fotos`).
+
+## Caché
+
+GitHub Pages deja que los teléfonos guarden CSS y JS por 10 minutos. Por eso `index.html` los pide con
+`?v=3`: al cambiar `css/estilo.css` o `js/*.js`, suban ese número para que nadie vea una mezcla vieja.
 - Cada foto se achica en el teléfono (máx. 2560 px, sin datos de GPS) antes de subirla.

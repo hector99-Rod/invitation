@@ -16,9 +16,10 @@ window.BODA = {
   permitirSinEnlace: true,
   cuposSinEnlace: 6,
 
-  // Fotos de los invitados: la sección "Comparte sus fotos" aparece desde esta
-  // fecha. Para verla antes (o para el QR de las mesas) agreguen ?fotos a la URL.
-  fotosDesde: "2027-01-02T00:00:00-04:00",
+  // Fotos de los invitados: true muestra "Comparte sus fotos" en todos los enlaces
+  // (personales y generales). Con ?fotos en la URL se salta el sobre y va directo
+  // a las fotos (para el QR de las mesas).
+  mostrarFotos: true,
 
   // Canción de fondo: sube el archivo a la carpeta "musica" con este nombre.
   musica: "musica/cancion.mp3",

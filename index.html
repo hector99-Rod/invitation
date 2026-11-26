@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/estilo.css">
+<link rel="stylesheet" href="css/estilo.css?v=3">
 </head>
 <body class="cerrado">
 
@@ -244,8 +244,8 @@
         <h2 class="cinzel etiqueta" id="t-regalo">Lluvia de sobres</h2>
         <p class="script regalo-titulo">Su presencia es nuestro mejor regalo</p>
         <p class="regalo-texto">Si además desean tener un detalle con nosotros, con todo cariño les pedimos que, en lugar de un obsequio físico, nos acompañen con una lluvia de sobres a través de este código. Será una bendición para dar los primeros pasos de nuestro hogar.</p>
-        <img class="qr" src="img/qr-regalo.jpeg" alt="Código QR del BNB para la lluvia de sobres" width="1089" height="1600">
-        <a class="boton-linea" href="img/qr-regalo.jpeg" download="QR-regalo-Shana-y-Hector.jpg">Descargar el código</a>
+        <div class="qr-banco"><img src="img/qr-regalo.jpeg?v=2" alt="Código QR del BNB para la lluvia de sobres" width="1032" height="1534"></div>
+        <a class="boton-linea" href="img/qr-regalo.jpeg?v=2" download="QR-regalo-Shana-y-Hector.jpg">Descargar el código</a>
         <p class="nota">Guárdelo y escanéelo desde la app de su banco.</p>
       </div>
     </section>
@@ -299,12 +299,16 @@
       </div>
     </section>
 
-    <!-- Fotos de los invitados (aparece desde config.fotosDesde, o con ?fotos en la URL) -->
+    <!-- Fotos de los invitados (config.mostrarFotos; con ?fotos en la URL va directo aquí) -->
     <section class="seccion fotos rv" id="fotos" aria-labelledby="t-fotos" hidden>
       <h2 class="script" id="t-fotos">Comparte sus fotos</h2>
       <p class="frase-corta">Ustedes verán momentos que nosotros no alcanzaremos a ver. Compártanlos y guardémoslos juntos.</p>
       <form id="fotos-form" class="rsvp-form" novalidate>
-        <div class="campo">
+        <div class="rsvp-familia" id="fotos-familia" hidden>
+          <span class="cinzel etiqueta">Fotos de</span>
+          <span class="rsvp-nombre" id="fotos-nombre"></span>
+        </div>
+        <div class="campo" id="campo-autor">
           <label for="f-autor">Su nombre <span>(opcional)</span></label>
           <input id="f-autor" name="autor" autocomplete="name" maxlength="80">
         </div>
@@ -333,7 +337,8 @@
   </div>
 </main>
 
-<script src="js/config.js"></script>
-<script src="js/app.js"></script>
+<!-- ?v=: al cambiar estos archivos, suban el número para que los teléfonos no usen la copia vieja -->
+<script src="js/config.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>
