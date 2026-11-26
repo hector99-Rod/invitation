@@ -8,7 +8,7 @@ window.BODA = {
   fecha: "2027-01-02T14:00:00-04:00",
 
   // Fecha límite para confirmar (texto libre). Déjala vacía para no mostrarla.
-  fechaLimite: "",
+  fechaLimite: "12 de diciembre",
 
   // ¿Se puede confirmar sin enlace personal (por ejemplo, desde el QR impreso)?
   // true: pide el nombre y deja registrar hasta "cuposSinEnlace" personas.

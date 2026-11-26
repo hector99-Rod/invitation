@@ -295,7 +295,7 @@
   }
 
   if (C.fechaLimite) {
-    $("#rsvp-limite").textContent = "Les pedimos confirmar antes del " + C.fechaLimite + ".";
+    $("#rsvp-limite").textContent = "Les pedimos confirmar hasta el " + C.fechaLimite + ".";
     $("#rsvp-limite").hidden = false;
   }
 

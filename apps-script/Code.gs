@@ -36,7 +36,10 @@ const AJUSTES = {
   // Cambia esto por la dirección de la página publicada en GitHub Pages:
   URL_PAGINA: 'https://hector99-rod.github.io/invitation/',
   CUPOS_SIN_ENLACE: 6,
-  CODIGO_PAIS: '591'
+  CODIGO_PAIS: '591',
+  // Fecha límite para confirmar (sale en los mensajes de WhatsApp). Vacía = no se menciona.
+  // Al cambiarla, usen el menú 2 para rehacer los enlaces de WhatsApp.
+  FECHA_LIMITE: '12 de diciembre'
 };
 
 // Las columnas nuevas van SIEMPRE al final: así las versiones anteriores del
@@ -164,7 +167,7 @@ function generarEnlaces() {
     const cupos = parseInt(f[COL.CUPOS - 1], 10) || 1;
     const mensaje = 'Hola, ' + f[COL.INVITACION - 1] + '. Con mucho cariño les compartimos la invitación a nuestra boda, ' +
       'el sábado 2 de enero de 2027. Hemos reservado ' + (cupos === 1 ? '1 lugar' : cupos + ' lugares') +
-      ' para ustedes. Por favor, confirmen su asistencia aquí: ' + enlace + '  Con cariño, Shana y Héctor';
+      ' para ustedes. Por favor, confirmen su asistencia' + hastaFecha_() + ' aquí: ' + enlace + '  Con cariño, Shana y Héctor';
     const tel = telefono_(f[COL.TELEFONO - 1]);
     const wa = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(mensaje);
     enlaces.push([id, enlace, wa]);
@@ -227,7 +230,12 @@ function mensajeFamiliar_(nombre, invitacion, cupos, enlace) {
   return 'Hola' + (nombre ? ', ' + nombre : '') + '. Con mucho cariño te compartimos la invitación a nuestra boda ' +
     'para ' + invitacion + ', el sábado 2 de enero de 2027.' +
     (cupos > 1 ? ' Hemos reservado ' + cupos + ' lugares para la familia.' : '') +
-    ' Para confirmar, basta con que uno de ustedes responda por todos aquí: ' + enlace + '  Con cariño, Shana y Héctor';
+    ' Para confirmar' + hastaFecha_() + ', basta con que uno de ustedes responda por todos aquí: ' + enlace + '  Con cariño, Shana y Héctor';
+}
+
+/** " hasta el 12 de diciembre" (o nada si no hay fecha límite). */
+function hastaFecha_() {
+  return AJUSTES.FECHA_LIMITE ? ' hasta el ' + AJUSTES.FECHA_LIMITE : '';
 }
 
 function verResumen() {
