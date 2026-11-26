@@ -57,5 +57,5 @@ el menú 2, los mensajes se actualizan.
 ## Caché
 
 GitHub Pages deja que los teléfonos guarden CSS y JS por 10 minutos. Por eso `index.html` los pide con
-`?v=6`: al cambiar `css/estilo.css` o `js/*.js`, suban ese número para que nadie vea una mezcla vieja.
+`?v=7`: al cambiar `css/estilo.css` o `js/*.js`, suban ese número para que nadie vea una mezcla vieja.
 - Cada foto se achica en el teléfono (máx. 2560 px, sin datos de GPS) antes de subirla.
