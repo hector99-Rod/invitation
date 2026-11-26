@@ -575,8 +575,14 @@ function nuevoId_() {
   return id;
 }
 
+/**
+ * Número para wa.me: solo dígitos y con código de país.
+ *  "71234567" → 59171234567 (8 dígitos = celular de Bolivia)
+ *  "+54 9 11 2345-6789" o "0054 9 11…" → 5491123456789 (extranjeros: con su código)
+ */
 function telefono_(v) {
   let t = String(v || '').replace(/\D/g, '');
+  if (t.indexOf('00') === 0) t = t.slice(2); // prefijo internacional 00 → se quita
   if (t.length === 8) t = AJUSTES.CODIGO_PAIS + t;
   return t;
 }
