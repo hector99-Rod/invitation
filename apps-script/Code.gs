@@ -9,6 +9,10 @@
  *          nueva "Lista web", con un ID único y cupos sugeridos para revisar.
  *       2. Generar enlaces: crea el enlace personal de cada familia y un enlace
  *          de WhatsApp con el mensaje listo para enviar.
+ *       3. WhatsApp para más familiares: pestaña "Contactos" con una fila por
+ *          persona (invitación, nombre, teléfono). Cada persona recibe un mensaje
+ *          con su nombre y el MISMO enlace de su familia; la invitación sigue a
+ *          nombre del jefe de familia y se confirma una sola vez.
  *       3. Ver resumen: totales de confirmados, personas y pendientes.
  *       4. Preparar carpeta de fotos: crea la carpeta de Drive donde llegan las
  *          fotos de los invitados (y pide el permiso de Drive la primera vez).
@@ -26,6 +30,7 @@ const AJUSTES = {
   HOJA_RESPUESTAS: 'Respuestas web',
   HOJA_FOTOS: 'Fotos web',
   HOJA_CANCIONES: 'Canciones',
+  HOJA_CONTACTOS: 'Contactos',
   CARPETA_FOTOS: 'Boda S&H · Fotos de invitados',
   MAX_FOTO_MB: 15,
   // Cambia esto por la dirección de la página publicada en GitHub Pages:
@@ -45,6 +50,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('Boda S&H')
     .addItem('1 · Preparar lista web', 'prepararListaWeb')
     .addItem('2 · Generar enlaces y mensajes de WhatsApp', 'generarEnlaces')
+    .addItem('3 · WhatsApp para más familiares (pestaña Contactos)', 'prepararContactos')
     .addSeparator()
     .addItem('Ver resumen de confirmaciones', 'verResumen')
     .addItem('Reabrir confirmación de las filas seleccionadas', 'reabrirSeleccion')
@@ -145,6 +151,93 @@ function generarEnlaces() {
   });
   lista.getRange(2, COL.ID, n, 1).setValues(enlaces.map(function (e) { return [e[0]]; }));
   lista.getRange(2, COL.ENLACE, n, 2).setValues(enlaces.map(function (e) { return [e[1], e[2]]; }));
+  // Los mensajes de "Contactos" usan estos enlaces y cupos: se rehacen también
+  const contactos = ss.getSheetByName(AJUSTES.HOJA_CONTACTOS);
+  if (contactos && contactos.getLastRow() > 1) completarContactos_(contactos, 2, contactos.getLastRow());
+}
+
+/* ---------------- Contactos: la misma invitación a varios familiares ---------------- */
+
+const COL_CONTACTO = { INVITACION: 1, NOMBRE: 2, TELEFONO: 3, ID: 4, ENLACE: 5, WHATSAPP: 6 };
+
+/** Menú 3: crea la pestaña "Contactos" (si no existe), la actualiza y la muestra. */
+function prepararContactos() {
+  const ss = SpreadsheetApp.getActive();
+  const h = hojaContactos_(ss);
+  if (h.getLastRow() > 1) completarContactos_(h, 2, h.getLastRow());
+  h.activate();
+  ss.toast('En cada fila elijan la invitación, escriban el nombre y el teléfono: el enlace de WhatsApp se arma solo.', 'Boda S&H', 10);
+}
+
+/** Al escribir en "Contactos", se arma el enlace de WhatsApp de esas filas. */
+function onEdit(e) {
+  const rango = e && e.range;
+  if (!rango || rango.getSheet().getName() !== AJUSTES.HOJA_CONTACTOS) return;
+  if (rango.getColumn() > COL_CONTACTO.TELEFONO) return; // editaron columnas que llena el script
+  const desde = Math.max(2, rango.getRow());
+  const hasta = rango.getLastRow();
+  if (hasta >= desde) completarContactos_(rango.getSheet(), desde, hasta);
+}
+
+function completarContactos_(hoja, desde, hasta) {
+  const familias = familiasPorNombre_();
+  const n = hasta - desde + 1;
+  const filas = hoja.getRange(desde, 1, n, COL_CONTACTO.TELEFONO).getValues();
+  const salida = filas.map(function (f) {
+    const familia = String(f[COL_CONTACTO.INVITACION - 1] || '').trim();
+    if (!familia) return ['', '', ''];
+    const inv = familias[normalizar_(familia)];
+    if (!inv) return ['', '', '⚠ Elijan la invitación de la lista'];
+    const enlace = AJUSTES.URL_PAGINA + '?id=' + inv.id;
+    const nombre = String(f[COL_CONTACTO.NOMBRE - 1] || '').trim();
+    const mensaje = 'Hola' + (nombre ? ', ' + nombre : '') + '. Con mucho cariño te compartimos la invitación a nuestra boda ' +
+      'para ' + inv.invitacion + ', el sábado 2 de enero de 2027.' +
+      (inv.cupos > 1 ? ' Hemos reservado ' + inv.cupos + ' lugares para la familia.' : '') +
+      ' Para confirmar, basta con que uno de ustedes responda por todos aquí: ' + enlace + '  Con cariño, Shana y Héctor';
+    return [inv.id, enlace, 'https://wa.me/' + telefono_(f[COL_CONTACTO.TELEFONO - 1]) + '?text=' + encodeURIComponent(mensaje)];
+  });
+  hoja.getRange(desde, COL_CONTACTO.ID, n, 3).setValues(salida);
+}
+
+/** { "juan carlos rubin de celis y familia": { id, invitacion, cupos }, ... } desde "Lista web". */
+function familiasPorNombre_() {
+  const lista = hojaLista_(SpreadsheetApp.getActive());
+  const n = lista.getLastRow() - 1;
+  const mapa = {};
+  if (n < 1) return mapa;
+  lista.getRange(2, 1, n, ENCABEZADOS.length).getValues().forEach(function (f) {
+    const id = String(f[COL.ID - 1]).trim();
+    const invitacion = String(f[COL.INVITACION - 1]).trim();
+    if (id && invitacion) mapa[normalizar_(invitacion)] = { id: id, invitacion: invitacion, cupos: parseInt(f[COL.CUPOS - 1], 10) || 1 };
+  });
+  return mapa;
+}
+
+function hojaContactos_(ss) {
+  let h = ss.getSheetByName(AJUSTES.HOJA_CONTACTOS);
+  if (!h) {
+    h = ss.insertSheet(AJUSTES.HOJA_CONTACTOS);
+    h.getRange(1, 1, 1, 6).setValues([['Invitación (elijan de la lista)', 'Nombre de la persona', 'Teléfono (WhatsApp)',
+      'ID', 'Enlace personal', 'Enviar por WhatsApp']])
+      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
+    h.setFrozenRows(1);
+    h.setColumnWidth(COL_CONTACTO.INVITACION, 300);
+    h.setColumnWidth(COL_CONTACTO.NOMBRE, 180);
+    h.setColumnWidth(COL_CONTACTO.TELEFONO, 160);
+    h.setColumnWidth(COL_CONTACTO.ENLACE, 260);
+    h.setColumnWidth(COL_CONTACTO.WHATSAPP, 200);
+    h.getRange(2, COL_CONTACTO.TELEFONO, h.getMaxRows() - 1, 1).setNumberFormat('@'); // texto: no pierde el + ni los ceros
+    h.getRange(2, COL_CONTACTO.ID, h.getMaxRows() - 1, 3).setBackground('#F3F3F3');  // gris = lo llena el script
+  }
+  // Lista desplegable con las invitaciones de "Lista web" (toda la columna, así incluye las nuevas)
+  const lista = hojaLista_(ss);
+  const regla = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(lista.getRange(2, COL.INVITACION, Math.max(1, lista.getMaxRows() - 1), 1), true)
+    .setAllowInvalid(false)
+    .setHelpText('Elijan la invitación de la lista (pestaña "' + AJUSTES.HOJA_LISTA + '").')
+    .build();
+  h.getRange(2, COL_CONTACTO.INVITACION, h.getMaxRows() - 1, 1).setDataValidation(regla);
+  return h;
 }
 
 function verResumen() {
