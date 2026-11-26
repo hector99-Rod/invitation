@@ -46,11 +46,18 @@ const ENCABEZADOS = ['ID', 'Lado', 'Invitación (jefe de familia)', 'Cupos', 'Te
   'Otros familiares (nombre y teléfono)', 'WhatsApp otros familiares'];
 const COL = { ID: 1, LADO: 2, INVITACION: 3, CUPOS: 4, TELEFONO: 5, ENLACE: 6, WHATSAPP: 7,
   ESTADO: 8, ASISTENTES: 9, NOMBRES: 10, MENSAJE: 11, FECHA: 12, OTROS: 13, WA_OTROS: 14 };
+const ENC_RESPUESTAS = ['Fecha', 'ID', 'Invitación', 'Asiste', 'Personas', 'Nombres', 'Mensaje'];
+const ENC_FOTOS = ['Fecha', 'Autor', 'Archivo', 'Enlace', 'KB', 'Nombre original', 'Fecha en el teléfono'];
+const ENC_CANCIONES = ['Fecha', 'ID', 'Invitación', 'Lado', 'Canción', 'Artista'];
 
 /* ---------------- Menú ---------------- */
 
 function onOpen() {
-  try { asegurarColumnasFamiliares_(hojaLista_(SpreadsheetApp.getActive())); } catch (err) { /* sin lista aún */ }
+  const ss = SpreadsheetApp.getActive();
+  // Si borraron el contenido de alguna pestaña, se reponen sus encabezados
+  try { revisarHojas_(ss); } catch (err) { /* nada que revisar aún */ }
+  // Una sola vez: los IDs pasan a ser fijos (y se rehacen los enlaces)
+  try { if (fijarIds_(ss)) generarEnlaces(); } catch (err) { /* se reintenta al usar el menú */ }
   SpreadsheetApp.getUi().createMenu('Boda S&H')
     .addItem('1 · Preparar lista web', 'prepararListaWeb')
     .addItem('2 · Generar enlaces y mensajes de WhatsApp', 'generarEnlaces')
@@ -98,11 +105,14 @@ function prepararListaWeb() {
   const ss = SpreadsheetApp.getActive();
   const origen = ss.getSheetByName(AJUSTES.HOJA_ORIGEN);
   if (!origen) throw new Error('No encuentro la pestaña "' + AJUSTES.HOJA_ORIGEN + '".');
-  const lista = hojaLista_(ss);
+  const lista = revisarLista_(ss); // antes de contar filas: así las familias empiezan en la fila 2
 
   const ultima = lista.getLastRow();
   const yaEstan = new Set(ultima > 1
     ? lista.getRange(2, COL.INVITACION, ultima - 1, 1).getValues().flat().map(normalizar_)
+    : []);
+  const usados = new Set(ultima > 1
+    ? lista.getRange(2, COL.ID, ultima - 1, 1).getValues().flat().map(String)
     : []);
 
   const datos = origen.getDataRange().getValues();
@@ -116,7 +126,9 @@ function prepararListaWeb() {
       const nombre = String(datos[r][lado.col] || '').trim();
       if (!nombre || yaEstan.has(normalizar_(nombre))) return;
       yaEstan.add(normalizar_(nombre));
-      nuevas.push([nuevoId_(), lado.nombre, nombre, cuposSugeridos_(nombre), '', '', '', 'Pendiente', '', '', '', '', '', '']);
+      const id = idPara_(nombre, usados);
+      usados.add(id);
+      nuevas.push([id, lado.nombre, nombre, cuposSugeridos_(nombre), '', '', '', 'Pendiente', '', '', '', '', '', '']);
     });
   }
   if (nuevas.length) {
@@ -133,15 +145,20 @@ function prepararListaWeb() {
 
 function generarEnlaces() {
   const ss = SpreadsheetApp.getActive();
-  const lista = hojaLista_(ss);
+  fijarIds_(ss);
+  const lista = revisarLista_(ss);
   const n = lista.getLastRow() - 1;
   if (n < 1) return;
   const rango = lista.getRange(2, 1, n, ENCABEZADOS.length);
   const filas = rango.getValues();
+  const usados = new Set(filas.map(function (f) { return String(f[COL.ID - 1]).trim(); }).filter(String));
   const enlaces = [];
   filas.forEach(function (f) {
     let id = String(f[COL.ID - 1]).trim();
-    if (!id && String(f[COL.INVITACION - 1]).trim()) id = nuevoId_();
+    if (!id && String(f[COL.INVITACION - 1]).trim()) {
+      id = idPara_(f[COL.INVITACION - 1], usados);
+      usados.add(id);
+    }
     if (!id) { enlaces.push([f[COL.ID - 1], f[COL.ENLACE - 1], f[COL.WHATSAPP - 1]]); return; }
     const enlace = AJUSTES.URL_PAGINA + '?id=' + id;
     const cupos = parseInt(f[COL.CUPOS - 1], 10) || 1;
@@ -155,7 +172,6 @@ function generarEnlaces() {
   lista.getRange(2, COL.ID, n, 1).setValues(enlaces.map(function (e) { return [e[0]]; }));
   lista.getRange(2, COL.ENLACE, n, 2).setValues(enlaces.map(function (e) { return [e[1], e[2]]; }));
   // Los mensajes de "Otros familiares" usan estos enlaces y cupos: se rehacen también
-  asegurarColumnasFamiliares_(lista);
   completarFamiliares_(lista, 2, lista.getLastRow());
 }
 
@@ -214,19 +230,8 @@ function mensajeFamiliar_(nombre, invitacion, cupos, enlace) {
     ' Para confirmar, basta con que uno de ustedes responda por todos aquí: ' + enlace + '  Con cariño, Shana y Héctor';
 }
 
-/** Agrega al final de "Lista web" las dos columnas de otros familiares, si todavía no están. */
-function asegurarColumnasFamiliares_(h) {
-  const actuales = h.getRange(1, COL.OTROS, 1, 2).getValues()[0];
-  if (actuales[0] === ENCABEZADOS[COL.OTROS - 1] && actuales[1] === ENCABEZADOS[COL.WA_OTROS - 1]) return;
-  h.getRange(1, COL.OTROS, 1, 2).setValues([[ENCABEZADOS[COL.OTROS - 1], ENCABEZADOS[COL.WA_OTROS - 1]]])
-    .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
-  h.setColumnWidth(COL.OTROS, 300);
-  h.setColumnWidth(COL.WA_OTROS, 240);
-  h.getRange(1, COL.OTROS).setNote('Escriban nombre y teléfono separados por comas. Ej.: Ana 70123456, Luis 69998877');
-}
-
 function verResumen() {
-  const lista = hojaLista_(SpreadsheetApp.getActive());
+  const lista = revisarLista_(SpreadsheetApp.getActive());
   const n = lista.getLastRow() - 1;
   if (n < 1) { SpreadsheetApp.getUi().alert('La lista web está vacía.'); return; }
   const filas = lista.getRange(2, 1, n, ENCABEZADOS.length).getValues().filter(function (f) { return f[COL.ID - 1]; });
@@ -367,14 +372,7 @@ function carpetaFotos_() {
 }
 
 function hojaFotos_(ss) {
-  let h = ss.getSheetByName(AJUSTES.HOJA_FOTOS);
-  if (!h) {
-    h = ss.insertSheet(AJUSTES.HOJA_FOTOS);
-    h.getRange(1, 1, 1, 7).setValues([['Fecha', 'Autor', 'Archivo', 'Enlace', 'KB', 'Nombre original', 'Fecha en el teléfono']])
-      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
-    h.setFrozenRows(1);
-  }
-  return h;
+  return hoja_(ss, AJUSTES.HOJA_FOTOS, ENC_FOTOS);
 }
 
 /* ---------------- Canciones pedidas ---------------- */
@@ -401,43 +399,84 @@ function guardarCancion_(d) {
 }
 
 function hojaCanciones_(ss) {
-  let h = ss.getSheetByName(AJUSTES.HOJA_CANCIONES);
-  if (!h) {
-    h = ss.insertSheet(AJUSTES.HOJA_CANCIONES);
-    h.getRange(1, 1, 1, 6).setValues([['Fecha', 'ID', 'Invitación', 'Lado', 'Canción', 'Artista']])
-      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
-    h.setFrozenRows(1);
-  }
-  return h;
+  return hoja_(ss, AJUSTES.HOJA_CANCIONES, ENC_CANCIONES);
 }
 
 /* ---------------- Ayudantes ---------------- */
 
-function hojaLista_(ss) {
-  let h = ss.getSheetByName(AJUSTES.HOJA_LISTA);
-  if (!h) {
-    h = ss.insertSheet(AJUSTES.HOJA_LISTA);
-    h.getRange(1, 1, 1, ENCABEZADOS.length).setValues([ENCABEZADOS])
-      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
-    h.setFrozenRows(1);
-    h.setColumnWidth(COL.INVITACION, 280);
-    h.setColumnWidth(COL.ENLACE, 260);
-    h.setColumnWidth(COL.WHATSAPP, 200);
-    h.getRange('D:D').setHorizontalAlignment('center');
-    h.getRange('I:I').setHorizontalAlignment('center');
-  }
+/**
+ * Devuelve la pestaña (la crea si no existe). Si está vacía —nueva o porque
+ * borraron todo su contenido— le pone los encabezados antes de usarla.
+ * (Esta revisión es rápida: solo cuenta filas; la revisión completa es revisarHojas_.)
+ */
+function hoja_(ss, nombre, encabezados) {
+  const h = ss.getSheetByName(nombre) || ss.insertSheet(nombre);
+  if (h.getLastRow() === 0 && asegurarEncabezados_(h, encabezados) && nombre === AJUSTES.HOJA_LISTA) formatoLista_(h);
   return h;
 }
 
+function hojaLista_(ss) {
+  return hoja_(ss, AJUSTES.HOJA_LISTA, ENCABEZADOS);
+}
+
 function hojaRespuestas_(ss) {
-  let h = ss.getSheetByName(AJUSTES.HOJA_RESPUESTAS);
-  if (!h) {
-    h = ss.insertSheet(AJUSTES.HOJA_RESPUESTAS);
-    h.getRange(1, 1, 1, 7).setValues([['Fecha', 'ID', 'Invitación', 'Asiste', 'Personas', 'Nombres', 'Mensaje']])
-      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
-    h.setFrozenRows(1);
-  }
+  return hoja_(ss, AJUSTES.HOJA_RESPUESTAS, ENC_RESPUESTAS);
+}
+
+/** Revisión completa de "Lista web" (lee la fila 1). La usan los menús. */
+function revisarLista_(ss) {
+  const h = hojaLista_(ss);
+  if (asegurarEncabezados_(h, ENCABEZADOS)) formatoLista_(h);
   return h;
+}
+
+/** Al abrir la hoja: revisa los encabezados de todas las pestañas que existen. */
+function revisarHojas_(ss) {
+  [[AJUSTES.HOJA_LISTA, ENCABEZADOS], [AJUSTES.HOJA_RESPUESTAS, ENC_RESPUESTAS],
+    [AJUSTES.HOJA_FOTOS, ENC_FOTOS], [AJUSTES.HOJA_CANCIONES, ENC_CANCIONES]].forEach(function (p) {
+    const h = ss.getSheetByName(p[0]);
+    if (h && asegurarEncabezados_(h, p[1]) && p[0] === AJUSTES.HOJA_LISTA) formatoLista_(h);
+  });
+}
+
+/**
+ * Deja la fila 1 con los encabezados. Devuelve true si tuvo que cambiar algo.
+ *  - Fila 1 vacía o con encabezados sueltos/incompletos → se completan.
+ *  - Fila 1 con datos (p. ej. una familia, porque borraron todo y se volvió a
+ *    llenar) → se inserta una fila arriba para los encabezados; no se pierde nada.
+ */
+function asegurarEncabezados_(h, encabezados) {
+  const n = encabezados.length;
+  const fila1 = h.getLastRow() > 0 ? h.getRange(1, 1, 1, n).getValues()[0] : encabezados.map(function () { return ''; });
+  const texto = fila1.map(function (v) { return String(v).trim(); });
+  if (texto.every(function (t, i) { return t === encabezados[i]; })) return false;
+
+  const soloEncabezados = texto.every(function (t, i) { return t === '' || t === encabezados[i]; });
+  if (!soloEncabezados) {
+    h.insertRowBefore(1);
+    // La fila de datos que bajó pudo quedar con el formato de encabezado o con
+    // títulos sueltos (p. ej. en M y N): se limpia
+    const bajada = h.getRange(2, 1, 1, n);
+    bajada.getValues()[0].forEach(function (v, i) {
+      if (String(v).trim() === encabezados[i]) h.getRange(2, i + 1).clearContent();
+    });
+    bajada.setFontWeight('normal').setBackground(null).setFontColor(null);
+  }
+  h.getRange(1, 1, 1, n).setValues([encabezados])
+    .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
+  h.setFrozenRows(1);
+  return true;
+}
+
+function formatoLista_(h) {
+  h.setColumnWidth(COL.INVITACION, 280);
+  h.setColumnWidth(COL.ENLACE, 260);
+  h.setColumnWidth(COL.WHATSAPP, 200);
+  h.setColumnWidth(COL.OTROS, 300);
+  h.setColumnWidth(COL.WA_OTROS, 240);
+  h.getRange('D:D').setHorizontalAlignment('center');
+  h.getRange('I:I').setHorizontalAlignment('center');
+  h.getRange(1, COL.OTROS).setNote('Escriban nombre y teléfono separados por comas. Ej.: Ana 70123456, Luis 69998877');
 }
 
 function buscar_(id) {
@@ -464,6 +503,61 @@ function cuposSugeridos_(nombre) {
   if (/familia/i.test(nombre)) return 4;
   if (/\sy\s/i.test(nombre)) return 2;
   return 1;
+}
+
+/**
+ * ID FIJO de una familia: sale de su nombre + una clave secreta que se crea una
+ * sola vez y queda guardada en el script (no en GitHub, así nadie puede adivinar
+ * los enlaces). Si borran "Lista web" y la vuelven a armar, cada familia recibe
+ * el MISMO ID, y sus enlaces ya enviados siguen funcionando.
+ */
+function idPara_(invitacion, usados) {
+  const props = PropertiesService.getScriptProperties();
+  let clave = props.getProperty('CLAVE_IDS');
+  if (!clave) {
+    clave = Utilities.getUuid();
+    props.setProperty('CLAVE_IDS', clave);
+  }
+  const letras = 'abcdefghjkmnpqrstuvwxyz23456789';
+  for (let intento = 0; intento < 50; intento++) {
+    const texto = clave + '|' + normalizar_(invitacion) + (intento ? '|' + intento : '');
+    const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, texto, Utilities.Charset.UTF_8);
+    let id = '';
+    for (let i = 0; i < 7; i++) id += letras.charAt(((bytes[i] % letras.length) + letras.length) % letras.length);
+    if (!usados || !usados.has(id)) return id;
+  }
+  return nuevoId_();
+}
+
+/**
+ * Una sola vez: cambia los IDs existentes por IDs fijos y lo anota para no
+ * repetirlo nunca. Solo lo hace si ninguna familia respondió todavía (si ya hay
+ * respuestas, los enlaces están en uso y no se tocan).
+ */
+function fijarIds_(ss) {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('IDS_FIJOS') === 'si') return false;
+  const lista = ss.getSheetByName(AJUSTES.HOJA_LISTA);
+  let cambio = false;
+  if (lista && lista.getLastRow() > 1) {
+    revisarLista_(ss);
+    const n = lista.getLastRow() - 1;
+    const filas = lista.getRange(2, 1, n, ENCABEZADOS.length).getValues();
+    const respondio = filas.some(function (f) { return f[COL.ESTADO - 1] === 'Confirmado' || f[COL.ESTADO - 1] === 'No asistirá'; });
+    if (!respondio) {
+      const usados = new Set();
+      lista.getRange(2, COL.ID, n, 1).setValues(filas.map(function (f) {
+        const invitacion = String(f[COL.INVITACION - 1]).trim();
+        if (!invitacion) return [f[COL.ID - 1]];
+        const id = idPara_(invitacion, usados);
+        usados.add(id);
+        return [id];
+      }));
+      cambio = true;
+    }
+  }
+  props.setProperty('IDS_FIJOS', 'si');
+  return cambio;
 }
 
 function nuevoId_() {
