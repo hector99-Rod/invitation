@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/estilo.css?v=3">
+<link rel="stylesheet" href="css/estilo.css?v=4">
 </head>
 <body class="cerrado">
 
@@ -299,6 +299,29 @@
       </div>
     </section>
 
+    <!-- Canciones: los invitados piden la música de la fiesta (config.pedirCanciones) -->
+    <section class="seccion canciones rv" id="canciones" aria-labelledby="t-canciones" hidden>
+      <h2 class="script" id="t-canciones">Pide tu canción</h2>
+      <p class="frase-corta">¿Qué canción no puede faltar en la fiesta? Pidan todas las que quieran.</p>
+      <form id="cancion-form" class="rsvp-form" novalidate>
+        <div class="rsvp-familia" id="cancion-familia" hidden>
+          <span class="cinzel etiqueta">Pedido de</span>
+          <span class="rsvp-nombre" id="cancion-nombre"></span>
+        </div>
+        <div class="campo">
+          <label for="f-cancion">Canción</label>
+          <input id="f-cancion" name="cancion" maxlength="120" autocomplete="off" placeholder="Ej.: Vivir mi vida">
+        </div>
+        <div class="campo">
+          <label for="f-artista">Artista <span>(opcional)</span></label>
+          <input id="f-artista" name="artista" maxlength="80" autocomplete="off" placeholder="Ej.: Marc Anthony">
+        </div>
+        <button class="boton-oro" type="submit" id="cancion-enviar">Pedir canción</button>
+        <p class="estado" id="cancion-estado" role="status" aria-live="polite"></p>
+        <ul class="canciones-lista" id="canciones-pedidas"></ul>
+      </form>
+    </section>
+
     <!-- Fotos de los invitados (config.mostrarFotos; con ?fotos en la URL va directo aquí) -->
     <section class="seccion fotos rv" id="fotos" aria-labelledby="t-fotos" hidden>
       <h2 class="script" id="t-fotos">Comparte sus fotos</h2>
@@ -338,7 +361,7 @@
 </main>
 
 <!-- ?v=: al cambiar estos archivos, suban el número para que los teléfonos no usen la copia vieja -->
-<script src="js/config.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/config.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

@@ -21,6 +21,9 @@ window.BODA = {
   // a las fotos (para el QR de las mesas).
   mostrarFotos: true,
 
+  // Canciones: true muestra "Pide tu canción" (se guardan en la pestaña "Canciones").
+  pedirCanciones: true,
+
   // Canción de fondo: sube el archivo a la carpeta "musica" con este nombre.
   musica: "musica/cancion.mp3",
 

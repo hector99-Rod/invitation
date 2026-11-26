@@ -16,6 +16,8 @@
  *     (estado actual de cada familia) y en "Respuestas web" (historial).
  *   - Recibe las fotos de los invitados, las guarda en la carpeta de Drive y
  *     anota cada una en "Fotos web".
+ *   - Recibe los pedidos de canciones y los anota en "Canciones" (con la familia
+ *     y el lado, para armar la playlist).
  */
 
 const AJUSTES = {
@@ -23,6 +25,7 @@ const AJUSTES = {
   HOJA_LISTA: 'Lista web',
   HOJA_RESPUESTAS: 'Respuestas web',
   HOJA_FOTOS: 'Fotos web',
+  HOJA_CANCIONES: 'Canciones',
   CARPETA_FOTOS: 'Boda S&H · Fotos de invitados',
   MAX_FOTO_MB: 15,
   // Cambia esto por la dirección de la página publicada en GitHub Pages:
@@ -160,6 +163,7 @@ function verResumen() {
     .filter(function (r) { return r[1] === '(sin enlace)' && r[3] === 'Sí'; })
     .reduce(function (s, r) { return s + (parseInt(r[4], 10) || 0); }, 0);
   const fotos = Math.max(0, hojaFotos_(SpreadsheetApp.getActive()).getLastRow() - 1);
+  const canciones = Math.max(0, hojaCanciones_(SpreadsheetApp.getActive()).getLastRow() - 1);
   SpreadsheetApp.getUi().alert(
     'Invitaciones: ' + filas.length + '\n' +
     'Cupos reservados: ' + cupos + '\n\n' +
@@ -167,7 +171,8 @@ function verResumen() {
     'No asistirán: ' + no + '\n' +
     'Pendientes: ' + pend + '\n\n' +
     'Confirmaciones sin enlace personal: ' + sinEnlace + ' personas (ver "Respuestas web")\n\n' +
-    'Fotos recibidas: ' + fotos + ' (ver "' + AJUSTES.HOJA_FOTOS + '")');
+    'Fotos recibidas: ' + fotos + ' (ver "' + AJUSTES.HOJA_FOTOS + '")\n' +
+    'Canciones pedidas: ' + canciones + ' (ver "' + AJUSTES.HOJA_CANCIONES + '")');
 }
 
 /* ---------------- Página web ---------------- */
@@ -190,6 +195,7 @@ function doPost(e) {
   // Las fotos no tocan "Lista web": no esperan el candado, así varios invitados
   // pueden subir al mismo tiempo sin hacer fila.
   if (d.tipo === 'foto') return guardarFoto_(d);
+  if (d.tipo === 'cancion') return guardarCancion_(d);
 
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -293,6 +299,40 @@ function hojaFotos_(ss) {
   return h;
 }
 
+/* ---------------- Canciones pedidas ---------------- */
+
+/**
+ * Recibe { tipo: 'cancion', cancion, artista, familia: <ID del enlace personal o ''> }.
+ * Usa "familia" y no "id" a propósito: si esta página llegara a publicarse antes
+ * que este script, la versión vieja de doPost no la confundiría con una confirmación.
+ */
+function guardarCancion_(d) {
+  try {
+    const cancion = limpiar_(d.cancion).slice(0, 120);
+    if (!cancion) return json_({ ok: false, error: 'falta_cancion' });
+    const artista = limpiar_(d.artista).slice(0, 80);
+    const id = String(d.familia || '').trim();
+    const f = id ? buscar_(id) : null;
+    hojaCanciones_(SpreadsheetApp.getActive()).appendRow([
+      new Date(), f ? id : '(sin enlace)', f ? f.invitacion : '', f ? f.lado : '', cancion, artista
+    ]);
+    return json_({ ok: true });
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  }
+}
+
+function hojaCanciones_(ss) {
+  let h = ss.getSheetByName(AJUSTES.HOJA_CANCIONES);
+  if (!h) {
+    h = ss.insertSheet(AJUSTES.HOJA_CANCIONES);
+    h.getRange(1, 1, 1, 6).setValues([['Fecha', 'ID', 'Invitación', 'Lado', 'Canción', 'Artista']])
+      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
+    h.setFrozenRows(1);
+  }
+  return h;
+}
+
 /* ---------------- Ayudantes ---------------- */
 
 function hojaLista_(ss) {
@@ -332,6 +372,7 @@ function buscar_(id) {
       return {
         hoja: h, fila: i + 2,
         invitacion: String(filas[i][COL.INVITACION - 1]),
+        lado: String(filas[i][COL.LADO - 1] || ''),
         cupos: parseInt(filas[i][COL.CUPOS - 1], 10) || 1,
         estado: String(filas[i][COL.ESTADO - 1] || 'Pendiente'),
         asistentes: parseInt(filas[i][COL.ASISTENTES - 1], 10) || 0
