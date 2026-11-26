@@ -254,6 +254,9 @@
     $("#fotos-nombre").textContent = d.invitacion;
     $("#fotos-familia").hidden = false;
     $("#campo-autor").hidden = true;
+    // Canciones: también a nombre de la invitación
+    $("#cancion-nombre").textContent = d.invitacion;
+    $("#cancion-familia").hidden = false;
     $("#reservado-familia").textContent = d.invitacion;
     $("#reservado-cupos").textContent = lugares(cupos);
     $("#reservado").hidden = false;
@@ -353,6 +356,44 @@
       boton.disabled = false;
     });
   });
+
+  /* ---------- Canciones pedidas ---------- */
+  if (C.pedirCanciones !== false) iniciarCanciones();
+
+  function iniciarCanciones() {
+    var formC = $("#cancion-form"), botonC = $("#cancion-enviar"), estadoC = $("#cancion-estado");
+    var campoC = $("#f-cancion"), campoA = $("#f-artista"), pedidas = $("#canciones-pedidas");
+    $("#canciones").hidden = false;
+
+    function error(texto) { estadoC.textContent = texto; estadoC.classList.add("error"); }
+
+    formC.addEventListener("submit", function (e) {
+      e.preventDefault();
+      estadoC.classList.remove("error");
+      var cancion = campoC.value.trim(), artista = campoA.value.trim();
+      if (!cancion) { error("Escriban el nombre de la canción."); campoC.focus(); return; }
+      if (!C.appsScriptUrl) { error("Muy pronto podrán pedir canciones."); return; }
+      botonC.disabled = true;
+      estadoC.textContent = "Enviando…";
+      // "familia" y no "id": ver guardarCancion_ en Code.gs
+      enviar({ tipo: "cancion", familia: invitacion ? ID : "", cancion: cancion, artista: artista }).then(function (r) {
+        if (!r || !r.ok) throw new Error((r && r.error) || "error");
+        var li = document.createElement("li");
+        li.textContent = artista ? cancion + " · " + artista : cancion;
+        pedidas.appendChild(li);
+        campoC.value = "";
+        campoA.value = "";
+        estadoC.textContent = "¡Anotada! Pueden pedir otra cuando quieran.";
+      }).catch(function (err) {
+        console.warn("No se pudo pedir la canción:", err.message);
+        error(err.message === "tiempo" || err instanceof TypeError
+          ? "No pudimos enviarla. Revisen su conexión e inténtenlo de nuevo."
+          : "No pudimos anotarla. Inténtenlo de nuevo en unos minutos.");
+      }).then(function () {
+        botonC.disabled = false;
+      });
+    });
+  }
 
   /* ---------- Fotos de los invitados ---------- */
   var VER_FOTOS = params.has("fotos");

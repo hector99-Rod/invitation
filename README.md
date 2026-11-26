@@ -7,6 +7,7 @@ Invitación web con confirmación personal
 - Ceremonia, recepción e itinerario con mapas
 - Confirmación de asistencia con enlace personal por familia
 - Fotos de los invitados: las suben desde la página y llegan a una carpeta de Google Drive
+- Pide tu canción: los invitados piden canciones para la fiesta (pestaña `Canciones`)
 
 Hecha con HTML, CSS y JavaScript, publicada con GitHub Pages.
 
@@ -20,7 +21,8 @@ El Apps Script vive dentro de la hoja (Extensiones → Apps Script). `apps-scrip
 de ese código: si se cambia aquí, hay que pegarlo allá y publicar una versión nueva.
 
 Pestañas que usa el script: `Invitaciones` (lista escrita a mano), `Lista web` (una fila por familia),
-`Respuestas web` (historial de confirmaciones) y `Fotos web` (registro de fotos subidas).
+`Respuestas web` (historial de confirmaciones), `Fotos web` (registro de fotos subidas) y
+`Canciones` (pedidos de canciones, con la familia y el lado cuando vienen de un enlace personal).
 No hay que cambiarles el nombre.
 
 ## Actualizar el Apps Script
@@ -43,5 +45,5 @@ No hay que cambiarles el nombre.
 ## Caché
 
 GitHub Pages deja que los teléfonos guarden CSS y JS por 10 minutos. Por eso `index.html` los pide con
-`?v=3`: al cambiar `css/estilo.css` o `js/*.js`, suban ese número para que nadie vea una mezcla vieja.
+`?v=4`: al cambiar `css/estilo.css` o `js/*.js`, suban ese número para que nadie vea una mezcla vieja.
 - Cada foto se achica en el teléfono (máx. 2560 px, sin datos de GPS) antes de subirla.

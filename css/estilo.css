@@ -328,6 +328,15 @@ h2.script { margin: 0; font-size: 50px; line-height: 1.1; }
 .rsvp-gracias .script { margin: 8px 0 0; font-size: 46px; }
 .rsvp-gracias p { font-size: 20px; font-style: italic; }
 
+/* Canciones pedidas */
+.canciones-lista { margin: 14px 0 0; padding: 0; list-style: none; }
+.canciones-lista:empty { display: none; }
+.canciones-lista li {
+  display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 10px 16px;
+  border: 1px solid rgba(217, 184, 104, .45); border-radius: 999px; font-size: 18px; font-style: italic; color: var(--marfil);
+}
+.canciones-lista li::before { content: "♪"; font-style: normal; color: var(--oro-2); }
+
 /* Fotos de los invitados */
 .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .fotos-elegir { display: flex; gap: 10px; width: 100%; margin-top: 22px; cursor: pointer; }
