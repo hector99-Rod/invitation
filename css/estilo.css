@@ -289,7 +289,13 @@ h2.script { margin: 0; font-size: 50px; line-height: 1.1; }
 .regalo .tarjeta { margin-top: 30px; padding-top: 56px; }
 .regalo-titulo { margin: 10px 0 0; font-size: 36px; line-height: 1.15; }
 .regalo-texto { margin: 14px 0 0; font-size: 18px; line-height: 1.5; font-style: italic; }
-.qr { width: 230px; height: auto; margin: 20px auto 16px; padding: 6px; background: #FFFFFF; border: 1px solid var(--oro); border-radius: 12px; }
+/* Rectángulo blanco con filete dorado, del tamaño justo de la tarjeta del banco */
+.qr-banco {
+  width: 250px; max-width: 100%; margin: 22px auto 18px; padding: 10px; background: #FFFFFF;
+  border: 1px solid var(--oro); border-radius: 4px;
+  box-shadow: 0 0 0 4px rgba(6, 12, 30, .55), 0 0 0 5px rgba(217, 184, 104, .45), 0 8px 22px rgba(0, 0, 0, .35);
+}
+.qr-banco img { width: 100%; height: auto; }
 
 /* Confirmación */
 .rsvp-cargando { margin-top: 18px; font-style: italic; color: var(--tenue); }

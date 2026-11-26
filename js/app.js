@@ -244,9 +244,16 @@
     $("#campo-nombre").hidden = true;
     $("#ayuda-cupos").textContent = "de " + lugares(cupos) + " reservados para ustedes";
     fijarCantidad(cupos);
-    // Personalización de la portada y del saludo
-    $("#portada-familia").textContent = d.invitacion;
-    $("#portada-para").hidden = false;
+    // Personalización de la portada (si el sobre sigue en pantalla: si el invitado
+    // ya lo abrió, la portada fue eliminada y no hay que tocarla) y del saludo
+    if ($("#portada-familia")) {
+      $("#portada-familia").textContent = d.invitacion;
+      $("#portada-para").hidden = false;
+    }
+    // Fotos: a nombre de la invitación, sin pedir el nombre
+    $("#fotos-nombre").textContent = d.invitacion;
+    $("#fotos-familia").hidden = false;
+    $("#campo-autor").hidden = true;
     $("#reservado-familia").textContent = d.invitacion;
     $("#reservado-cupos").textContent = lugares(cupos);
     $("#reservado").hidden = false;
@@ -289,7 +296,8 @@
       ? { invitacion: "Familia de prueba", cupos: 4, estado: "Confirmado", asistentes: 3 }
       : { invitacion: "Familia de prueba", cupos: 4, estado: "Pendiente" });
   } else if (ID && C.appsScriptUrl) {
-    consultar(ID).then(function (d) {
+    // Si la primera consulta falla (red lenta o Apps Script "despertando"), se reintenta una vez.
+    consultar(ID).catch(function () { return consultar(ID); }).then(function (d) {
       if (d && d.ok) modoFamilia(d);
       else if (C.permitirSinEnlace === false) soloConEnlace();
       else modoGeneral("No encontramos su enlace personal. Pueden confirmar escribiendo su nombre.");
@@ -348,8 +356,7 @@
 
   /* ---------- Fotos de los invitados ---------- */
   var VER_FOTOS = params.has("fotos");
-  var fotosDesde = C.fotosDesde ? new Date(C.fotosDesde).getTime() : Infinity;
-  if (VER_FOTOS || Date.now() >= fotosDesde) iniciarFotos();
+  if (VER_FOTOS || C.mostrarFotos !== false) iniciarFotos();
 
   function iniciarFotos() {
     var MAX_LADO = 2560;            // px del lado mayor tras achicar
@@ -481,7 +488,8 @@
       }
       subiendo = true;
       actualizar();
-      var autor = $("#f-autor").value.trim();
+      // Enlace personal: el nombre viene del Excel. Enlace general: el que escriban (opcional).
+      var autor = invitacion ? invitacion.invitacion : $("#f-autor").value.trim();
       var bien = 0, porConexion = false;
       // Una por una: así el progreso es claro y una foto fallida no frena a las demás.
       for (var i = 0; i < tanda.length; i++) {
