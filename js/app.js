@@ -254,13 +254,7 @@
     $("#campo-autor").hidden = true;
     $("#reservado-familia").textContent = d.invitacion;
     $("#reservado-cupos").textContent = lugares(cupos);
-    // Invitaciones solo para adultos (config.soloAdultos)
-    if (C.notaSoloAdultos && (C.soloAdultos || []).some(function (t) {
-      return t && normalizar(d.invitacion).indexOf(normalizar(t)) !== -1;
-    })) {
-      $("#reservado-nota").textContent = C.notaSoloAdultos;
-      $("#reservado-nota").hidden = false;
-    }
+    marcarSoloAdultos(ID);
     $("#reservado").hidden = false;
     $("#rsvp-cargando").hidden = true;
     // Cada enlace personal se responde una sola vez
@@ -268,9 +262,16 @@
     else form.hidden = false;
   }
 
-  // "Andrés  Adolfo" → "andres adolfo" (sin tildes ni mayúsculas, para comparar nombres)
-  function normalizar(s) {
-    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+  // Invitaciones solo para adultos: compara la huella SHA-256 del ID con config.soloAdultos
+  function marcarSoloAdultos(id) {
+    var huellas = C.soloAdultos || [];
+    if (!id || !huellas.length || !C.notaSoloAdultos || !window.crypto || !crypto.subtle) return;
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(id)).then(function (b) {
+      var hex = Array.prototype.map.call(new Uint8Array(b), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+      if (huellas.indexOf(hex) === -1) return;
+      $("#reservado-nota").textContent = C.notaSoloAdultos;
+      $("#reservado-nota").hidden = false;
+    }).catch(function () { /* sin la nota: el resto de la invitación sigue igual */ });
   }
 
   function yaRespondio(e) { return e === "Confirmado" || e === "No asistirá"; }
