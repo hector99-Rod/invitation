@@ -322,6 +322,28 @@ h2.script { margin: 0; font-size: 50px; line-height: 1.1; }
 .rsvp-gracias .script { margin: 8px 0 0; font-size: 46px; }
 .rsvp-gracias p { font-size: 20px; font-style: italic; }
 
+/* Fotos de los invitados */
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fotos-elegir { display: flex; gap: 10px; width: 100%; margin-top: 22px; cursor: pointer; }
+.fotos-elegir svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.oculto:focus-visible + .fotos-elegir { outline: 2px solid var(--oro-2); outline-offset: 2px; }
+.fotos-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+.fotos-lista:empty { display: none; }
+.foto { position: relative; aspect-ratio: 1; overflow: hidden; border: 1px solid rgba(217, 184, 104, .5); border-radius: 8px; background: rgba(4, 9, 21, .6); }
+.foto img { width: 100%; height: 100%; object-fit: cover; transition: opacity .3s; }
+.foto.subiendo img, .foto.listo img, .foto.error img { opacity: .4; }
+.foto::after { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--cinzel); font-size: 28px; font-weight: 700; }
+.foto.listo::after { content: "✓"; color: var(--oro-3); }
+.foto.error::after { content: "!"; color: #F2B8A0; }
+.foto.subiendo::after {
+  content: ""; inset: 50% auto auto 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+  border: 2px solid rgba(244, 222, 158, .3); border-top-color: var(--oro-3); border-radius: 50%;
+  animation: orbitar .8s linear infinite;
+}
+.foto-quitar { position: absolute; top: 3px; right: 3px; z-index: 1; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: rgba(4, 9, 21, .75); color: var(--blanco); font-size: 20px; line-height: 1; cursor: pointer; }
+.foto.subiendo .foto-quitar, .foto.listo .foto-quitar, .ocupado .foto-quitar { display: none; }
+.fotos-nota { margin: 4px 0 0; text-align: center; }
+
 /* Cierre */
 .cierre { padding-bottom: 20px; }
 .corona { position: relative; width: 280px; height: 280px; margin: 0 auto; }
