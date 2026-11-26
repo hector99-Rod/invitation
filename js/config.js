@@ -32,7 +32,7 @@ window.BODA = {
     "c601766d45914d0d26158659692f3036d0efbf81c919455a4f1dd35c59129ecc",
     "67ac6b654ae68add434edb44e0c14f2878cb698571bdeab8ede1b425a9f894bc"
   ],
-  notaSoloAdultos: "Con mucho cariño queremos darles este día libre: una noche solo para ustedes, para bailar, brindar y disfrutar sin preocupaciones mientras los peques descansan en casa.",
+  notaSoloAdultos: "Con mucho cariño, esta invitación es para ustedes dos: queremos regalarles un día libre para celebrar con nosotros. Sus hijos siempre están en nuestro corazón, aunque esta vez la fiesta sea solo para ustedes.",
 
   // Canción de fondo: sube el archivo a la carpeta "musica" con este nombre.
   musica: "musica/cancion.mp3",
