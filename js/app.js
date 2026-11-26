@@ -482,7 +482,7 @@
       subiendo = true;
       actualizar();
       var autor = $("#f-autor").value.trim();
-      var bien = 0;
+      var bien = 0, porConexion = false;
       // Una por una: así el progreso es claro y una foto fallida no frena a las demás.
       for (var i = 0; i < tanda.length; i++) {
         var item = tanda[i];
@@ -495,6 +495,10 @@
           bien++;
         } catch (err) {
           item.estado = "error";
+          // "tiempo" = el servidor no respondió; TypeError = sin internet.
+          // Cualquier otro error lo reportó el servidor (p. ej. falta un permiso).
+          if (err.message === "tiempo" || err instanceof TypeError) porConexion = true;
+          console.warn("No se pudo subir " + item.file.name + ":", err.message);
         }
         pintar(item);
       }
@@ -504,7 +508,9 @@
       if (mal) {
         estadoF.textContent = (bien ? "Recibimos " + fotos(bien) + ". " : "") +
           (mal === 1 ? "1 foto no se pudo subir" : mal + " fotos no se pudieron subir") +
-          " (marcadas con !). Revisen su conexión y toquen «Subir» de nuevo.";
+          " (marcadas con !). " + (porConexion
+            ? "Revisen su conexión y toquen «Subir» de nuevo."
+            : "Inténtenlo de nuevo en unos minutos.");
         estadoF.classList.add("error");
       } else {
         estadoF.textContent = "¡Gracias! Recibimos " + fotos(bien) + ". Pueden elegir más cuando quieran.";
