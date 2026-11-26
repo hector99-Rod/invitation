@@ -299,6 +299,27 @@
       </div>
     </section>
 
+    <!-- Fotos de los invitados (aparece desde config.fotosDesde, o con ?fotos en la URL) -->
+    <section class="seccion fotos rv" id="fotos" aria-labelledby="t-fotos" hidden>
+      <h2 class="script" id="t-fotos">Comparte sus fotos</h2>
+      <p class="frase-corta">Ustedes verán momentos que nosotros no alcanzaremos a ver. Compártanlos y guardémoslos juntos.</p>
+      <form id="fotos-form" class="rsvp-form" novalidate>
+        <div class="campo">
+          <label for="f-autor">Su nombre <span>(opcional)</span></label>
+          <input id="f-autor" name="autor" autocomplete="name" maxlength="80">
+        </div>
+        <input id="f-fotos" class="oculto" type="file" accept="image/*" multiple>
+        <label class="boton-linea fotos-elegir" for="f-fotos">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          Elegir fotos
+        </label>
+        <ul class="fotos-lista" id="fotos-lista"></ul>
+        <button class="boton-oro" type="submit" id="fotos-enviar" disabled>Subir fotos</button>
+        <p class="estado" id="fotos-estado" role="status" aria-live="polite"></p>
+        <p class="nota fotos-nota">Las fotos llegan solo a los novios; no se publican.</p>
+      </form>
+    </section>
+
     <!-- Cierre -->
     <footer class="seccion cierre rv">
       <div class="corona">

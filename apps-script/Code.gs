@@ -10,14 +10,21 @@
  *       2. Generar enlaces: crea el enlace personal de cada familia y un enlace
  *          de WhatsApp con el mensaje listo para enviar.
  *       3. Ver resumen: totales de confirmados, personas y pendientes.
+ *       4. Preparar carpeta de fotos: crea la carpeta de Drive donde llegan las
+ *          fotos de los invitados (y pide el permiso de Drive la primera vez).
  *   - Recibe las confirmaciones de la página y las guarda en "Lista web"
  *     (estado actual de cada familia) y en "Respuestas web" (historial).
+ *   - Recibe las fotos de los invitados, las guarda en la carpeta de Drive y
+ *     anota cada una en "Fotos web".
  */
 
 const AJUSTES = {
   HOJA_ORIGEN: 'Invitaciones',
   HOJA_LISTA: 'Lista web',
   HOJA_RESPUESTAS: 'Respuestas web',
+  HOJA_FOTOS: 'Fotos web',
+  CARPETA_FOTOS: 'Boda S&H · Fotos de invitados',
+  MAX_FOTO_MB: 15,
   // Cambia esto por la dirección de la página publicada en GitHub Pages:
   URL_PAGINA: 'https://hector99-rod.github.io/invitation/',
   CUPOS_SIN_ENLACE: 6,
@@ -38,7 +45,20 @@ function onOpen() {
     .addSeparator()
     .addItem('Ver resumen de confirmaciones', 'verResumen')
     .addItem('Reabrir confirmación de las filas seleccionadas', 'reabrirSeleccion')
+    .addSeparator()
+    .addItem('Preparar carpeta de fotos', 'prepararCarpetaFotos')
     .addToUi();
+}
+
+/**
+ * Crea (o encuentra) la carpeta de Drive para las fotos. Ejecútenla una vez desde
+ * el menú: así Google les pide el permiso de Drive antes de publicar la nueva versión.
+ */
+function prepararCarpetaFotos() {
+  const carpeta = carpetaFotos_();
+  hojaFotos_(SpreadsheetApp.getActive());
+  SpreadsheetApp.getUi().alert('Las fotos de los invitados llegarán a esta carpeta de Drive:\n\n' +
+    carpeta.getName() + '\n' + carpeta.getUrl());
 }
 
 /**
@@ -139,13 +159,15 @@ function verResumen() {
   const sinEnlace = hojaRespuestas_(SpreadsheetApp.getActive()).getDataRange().getValues()
     .filter(function (r) { return r[1] === '(sin enlace)' && r[3] === 'Sí'; })
     .reduce(function (s, r) { return s + (parseInt(r[4], 10) || 0); }, 0);
+  const fotos = Math.max(0, hojaFotos_(SpreadsheetApp.getActive()).getLastRow() - 1);
   SpreadsheetApp.getUi().alert(
     'Invitaciones: ' + filas.length + '\n' +
     'Cupos reservados: ' + cupos + '\n\n' +
     'Confirmadas: ' + conf + ' (' + personas + ' personas)\n' +
     'No asistirán: ' + no + '\n' +
     'Pendientes: ' + pend + '\n\n' +
-    'Confirmaciones sin enlace personal: ' + sinEnlace + ' personas (ver "Respuestas web")');
+    'Confirmaciones sin enlace personal: ' + sinEnlace + ' personas (ver "Respuestas web")\n\n' +
+    'Fotos recibidas: ' + fotos + ' (ver "' + AJUSTES.HOJA_FOTOS + '")');
 }
 
 /* ---------------- Página web ---------------- */
@@ -159,10 +181,19 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  let d;
+  try {
+    d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+  } catch (err) {
+    return json_({ ok: false, error: 'json_invalido' });
+  }
+  // Las fotos no tocan "Lista web": no esperan el candado, así varios invitados
+  // pueden subir al mismo tiempo sin hacer fila.
+  if (d.tipo === 'foto') return guardarFoto_(d);
+
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
-    const d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const asiste = d.asiste === true || d.asiste === 'si';
     const ahora = new Date();
     const ss = SpreadsheetApp.getActive();
@@ -193,6 +224,73 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/* ---------------- Fotos de los invitados ---------------- */
+
+/**
+ * Recibe { tipo: 'foto', archivo: <base64>, autor, original, modificada }.
+ * El formato se deduce de los primeros bytes del archivo (no de lo que diga el
+ * navegador), así solo se aceptan imágenes de verdad.
+ */
+function guardarFoto_(d) {
+  try {
+    const bytes = Utilities.base64Decode(String(d.archivo || ''));
+    if (!bytes.length) return json_({ ok: false, error: 'archivo_vacio' });
+    if (bytes.length > AJUSTES.MAX_FOTO_MB * 1024 * 1024) return json_({ ok: false, error: 'muy_grande' });
+    const tipo = tipoImagen_(bytes);
+    if (!tipo) return json_({ ok: false, error: 'no_es_imagen' });
+
+    const ahora = new Date();
+    const autor = limpiar_(d.autor).slice(0, 80);
+    const nombre = Utilities.formatDate(ahora, 'America/La_Paz', 'yyyyMMdd-HHmmss') + '_' +
+      (slug_(autor) || 'invitado') + '_' + nuevoId_() + '.' + tipo.ext;
+    const archivo = carpetaFotos_().createFile(Utilities.newBlob(bytes, tipo.mime, nombre));
+    hojaFotos_(SpreadsheetApp.getActive()).appendRow([
+      ahora, autor, nombre, archivo.getUrl(), Math.round(bytes.length / 1024),
+      limpiar_(d.original).slice(0, 120), limpiar_(d.modificada).slice(0, 40)
+    ]);
+    return json_({ ok: true });
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  }
+}
+
+/** Reconoce JPEG, PNG, WebP y HEIC/HEIF por su "firma" (magic bytes). */
+function tipoImagen_(b) {
+  if (b.length < 12) return null;
+  const u = function (i) { return (b[i] + 256) % 256; };  // Apps Script da bytes con signo (-128..127)
+  const txt = function (i, n) { let s = ''; for (let k = i; k < i + n; k++) s += String.fromCharCode(u(k)); return s; };
+  if (u(0) === 0xFF && u(1) === 0xD8 && u(2) === 0xFF) return { mime: 'image/jpeg', ext: 'jpg' };
+  if (u(0) === 0x89 && txt(1, 3) === 'PNG') return { mime: 'image/png', ext: 'png' };
+  if (txt(0, 4) === 'RIFF' && txt(8, 4) === 'WEBP') return { mime: 'image/webp', ext: 'webp' };
+  if (txt(4, 4) === 'ftyp' && /^(heic|heix|hevc|mif1|msf1)$/.test(txt(8, 4))) return { mime: 'image/heic', ext: 'heic' };
+  return null;
+}
+
+function carpetaFotos_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('CARPETA_FOTOS_ID');
+  if (id) {
+    try {
+      const c = DriveApp.getFolderById(id);
+      if (!c.isTrashed()) return c;
+    } catch (err) { /* la carpeta ya no existe: se crea otra */ }
+  }
+  const carpeta = DriveApp.createFolder(AJUSTES.CARPETA_FOTOS);
+  props.setProperty('CARPETA_FOTOS_ID', carpeta.getId());
+  return carpeta;
+}
+
+function hojaFotos_(ss) {
+  let h = ss.getSheetByName(AJUSTES.HOJA_FOTOS);
+  if (!h) {
+    h = ss.insertSheet(AJUSTES.HOJA_FOTOS);
+    h.getRange(1, 1, 1, 7).setValues([['Fecha', 'Autor', 'Archivo', 'Enlace', 'KB', 'Nombre original', 'Fecha en el teléfono']])
+      .setFontWeight('bold').setBackground('#0A1530').setFontColor('#E9C97C');
+    h.setFrozenRows(1);
+  }
+  return h;
 }
 
 /* ---------------- Ayudantes ---------------- */
@@ -264,6 +362,10 @@ function telefono_(v) {
 
 function normalizar_(s) {
   return String(s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ');
+}
+
+function slug_(s) {
+  return normalizar_(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);
 }
 
 function limpiar_(v) {

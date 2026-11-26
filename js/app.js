@@ -215,12 +215,12 @@
   function consultar(id) {
     return conTiempo(fetch(C.appsScriptUrl + "?id=" + encodeURIComponent(id)).then(function (r) { return r.json(); }), 12000);
   }
-  function enviar(datos) {
+  function enviar(datos, ms) {
     return conTiempo(fetch(C.appsScriptUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(datos)
-    }).then(function (r) { return r.json(); }), 20000);
+    }).then(function (r) { return r.json(); }), ms || 20000);
   }
 
   function modoGeneral(aviso) {
@@ -345,4 +345,174 @@
       boton.disabled = false;
     });
   });
+
+  /* ---------- Fotos de los invitados ---------- */
+  var VER_FOTOS = params.has("fotos");
+  var fotosDesde = C.fotosDesde ? new Date(C.fotosDesde).getTime() : Infinity;
+  if (VER_FOTOS || Date.now() >= fotosDesde) iniciarFotos();
+
+  function iniciarFotos() {
+    var MAX_LADO = 2560;            // px del lado mayor tras achicar
+    var CALIDAD = 0.88;             // calidad JPEG (0 a 1)
+    var MAX_ORIGINAL = 15 * 1024 * 1024; // si no se puede achicar, se envía tal cual hasta 15 MB
+    var MAX_COLA = 30;              // fotos por tanda (cuida la memoria del teléfono)
+    var seccion = $("#fotos"), formF = $("#fotos-form"), input = $("#f-fotos");
+    var lista = $("#fotos-lista"), botonF = $("#fotos-enviar"), estadoF = $("#fotos-estado");
+    var cola = [];                  // { file, li, url, estado: "espera" | "subiendo" | "listo" | "error" }
+    var subiendo = false;
+
+    seccion.hidden = false;
+    if (VER_FOTOS) {
+      // Desde el QR de las mesas: sin sobre ni música, directo a las fotos.
+      body.classList.remove("cerrado");
+      var p = $("#portada");
+      if (p) p.remove();
+      seccion.classList.add("visto");
+      // "instant": sin esto, el scroll suave del CSS recorre toda la invitación (varios segundos).
+      var ir = function () { seccion.scrollIntoView({ behavior: "instant", block: "start" }); };
+      if (document.readyState === "complete") ir(); else window.addEventListener("load", ir);
+    }
+
+    function fotos(n) { return n === 1 ? "1 foto" : n + " fotos"; }
+    function porSubir() { return cola.filter(function (i) { return i.estado === "espera" || i.estado === "error"; }); }
+    function pintar(item) { item.li.className = "foto " + item.estado; }
+    function actualizar() {
+      var n = porSubir().length;
+      formF.classList.toggle("ocupado", subiendo);
+      botonF.disabled = subiendo || n === 0;
+      botonF.textContent = n ? "Subir " + fotos(n) : "Subir fotos";
+    }
+
+    input.addEventListener("change", function () {
+      var omitidas = 0;
+      Array.prototype.forEach.call(input.files, function (file) {
+        if (file.type && file.type.indexOf("image/") !== 0) return;
+        if (porSubir().length >= MAX_COLA) { omitidas++; return; }
+        var li = document.createElement("li");
+        var img = document.createElement("img");
+        img.alt = "";
+        img.decoding = "async";
+        img.src = URL.createObjectURL(file);
+        var quitar = document.createElement("button");
+        quitar.type = "button";
+        quitar.className = "foto-quitar";
+        quitar.textContent = "×";
+        quitar.setAttribute("aria-label", "Quitar " + file.name);
+        li.appendChild(img);
+        li.appendChild(quitar);
+        var item = { file: file, li: li, url: img.src, estado: "espera" };
+        quitar.addEventListener("click", function () {
+          if (subiendo) return;
+          cola.splice(cola.indexOf(item), 1);
+          li.remove();
+          URL.revokeObjectURL(item.url);
+          actualizar();
+        });
+        cola.push(item);
+        pintar(item);
+        lista.appendChild(li);
+      });
+      input.value = ""; // permite volver a elegir las mismas fotos
+      estadoF.classList.remove("error");
+      estadoF.textContent = omitidas ? "Pueden subir hasta " + MAX_COLA + " fotos por vez; después elijan las demás." : "";
+      actualizar();
+    });
+
+    // Achica la foto en el navegador: menos megas, subida más rápida y sin datos de GPS.
+    function achicar(file) {
+      return new Promise(function (ok, no) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          var k = Math.min(1, MAX_LADO / Math.max(img.naturalWidth, img.naturalHeight));
+          var c = document.createElement("canvas");
+          c.width = Math.round(img.naturalWidth * k);
+          c.height = Math.round(img.naturalHeight * k);
+          var g = c.getContext("2d");
+          g.fillStyle = "#fff"; // las PNG transparentes no quedan negras
+          g.fillRect(0, 0, c.width, c.height);
+          g.drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          c.toBlob(function (b) { if (b) ok(b); else no(new Error("toBlob")); }, "image/jpeg", CALIDAD);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); no(new Error("formato")); };
+        img.src = url;
+      });
+    }
+
+    function aBase64(blob) {
+      return new Promise(function (ok, no) {
+        var r = new FileReader();
+        r.onload = function () { ok(String(r.result).split(",")[1]); };
+        r.onerror = function () { no(r.error); };
+        r.readAsDataURL(blob);
+      });
+    }
+
+    async function subirUna(item, autor) {
+      var blob;
+      try {
+        blob = await achicar(item.file);
+        if (blob.size > item.file.size && item.file.type === "image/jpeg") blob = item.file;
+      } catch (err) {
+        // Un formato que este navegador no sabe abrir (p. ej. HEIC en Android): va tal cual.
+        if (item.file.size > MAX_ORIGINAL) throw err;
+        blob = item.file;
+      }
+      var r = await enviar({
+        tipo: "foto",
+        archivo: await aBase64(blob),
+        autor: autor,
+        original: item.file.name,
+        modificada: new Date(item.file.lastModified || Date.now()).toISOString()
+      }, 120000);
+      if (!r || !r.ok) throw new Error((r && r.error) || "error");
+    }
+
+    formF.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var tanda = porSubir();
+      if (subiendo || !tanda.length) return;
+      estadoF.classList.remove("error");
+      if (!C.appsScriptUrl) {
+        estadoF.textContent = "La subida de fotos se activará muy pronto.";
+        estadoF.classList.add("error");
+        return;
+      }
+      subiendo = true;
+      actualizar();
+      var autor = $("#f-autor").value.trim();
+      var bien = 0;
+      // Una por una: así el progreso es claro y una foto fallida no frena a las demás.
+      for (var i = 0; i < tanda.length; i++) {
+        var item = tanda[i];
+        estadoF.textContent = "Subiendo " + (i + 1) + " de " + tanda.length + "…";
+        item.estado = "subiendo";
+        pintar(item);
+        try {
+          await subirUna(item, autor);
+          item.estado = "listo";
+          bien++;
+        } catch (err) {
+          item.estado = "error";
+        }
+        pintar(item);
+      }
+      subiendo = false;
+      actualizar();
+      var mal = tanda.length - bien;
+      if (mal) {
+        estadoF.textContent = (bien ? "Recibimos " + fotos(bien) + ". " : "") +
+          (mal === 1 ? "1 foto no se pudo subir" : mal + " fotos no se pudieron subir") +
+          " (marcadas con !). Revisen su conexión y toquen «Subir» de nuevo.";
+        estadoF.classList.add("error");
+      } else {
+        estadoF.textContent = "¡Gracias! Recibimos " + fotos(bien) + ". Pueden elegir más cuando quieran.";
+      }
+    });
+
+    window.addEventListener("beforeunload", function (e) {
+      if (subiendo) { e.preventDefault(); e.returnValue = ""; }
+    });
+  }
 })();
