@@ -171,7 +171,10 @@
   });
   $$("[data-waze]").forEach(function (a) {
     var L = lugar(a.getAttribute("data-waze"));
-    a.href = "https://waze.com/ul?q=" + encodeURIComponent(L.busqueda) + "&navigate=yes";
+    // Con coordenadas, Waze va al punto exacto (buscando por texto puede elegir otro lugar)
+    a.href = L.coordenadas
+      ? "https://waze.com/ul?ll=" + encodeURIComponent(L.coordenadas) + "&navigate=yes"
+      : "https://waze.com/ul?q=" + encodeURIComponent(L.busqueda) + "&navigate=yes";
   });
   var paginaBase = location.origin + location.pathname;
   var cal = "https://calendar.google.com/calendar/render?action=TEMPLATE" +

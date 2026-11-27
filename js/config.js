@@ -44,8 +44,11 @@ window.BODA = {
       enlace: ""
     },
     thaya: {
-      busqueda: "Espacio de Eventos Thaya, Av. Los Sargentos, Bajo Llojeta, La Paz, Bolivia",
-      enlace: ""
+      // En Google figura como "Thaya - Le Crayon" (C. 2, junto a la Av. Los Sargentos,
+      // Bajo Llojeta). OJO: hay otro "Espacio de Eventos THAYA" en Irpavi; no es ese.
+      busqueda: "Thaya - Le Crayon, La Paz, Bolivia",
+      enlace: "https://maps.google.com/?cid=2075272104263925968",
+      coordenadas: "-16.5287854,-68.1110887"
     }
   }
 };
